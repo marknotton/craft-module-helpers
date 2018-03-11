@@ -1,0 +1,35 @@
+{
+    "name": "marknotton/helpers",
+    "description": "Craft CMS 3.x helpers",
+    "type": "craft-module",
+    "version": "1.0.0",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-module"
+    ],
+    "support": {
+        "docs": "https://github.com/marknotton/craft-module-helpers/blob/master/README.md",
+        "issues": "https://github.com/marknotton/craft-module-helpers"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mark Notton",
+            "homepage": "https://github.com/marknotton/craft-module-helpers"
+        }
+    ],
+    "require": {
+        "craftcms/cms": "^3.0.0-RC14",
+    },
+    "extra": {
+        "name": "Helpers",
+        "handle": "helpers",
+        "schemaVersion": "1.0.0",
+        "hasCpSettings": false,
+        "hasCpSection": false,
+        "changelogUrl": "https://github.com/marknotton/craft-module-helpers/blob/master/CHANGELOG.md",
+        "class": "marknotton\\helpers\\Helpers"
+    }
+}
