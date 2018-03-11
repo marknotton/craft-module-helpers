@@ -21,7 +21,7 @@
         }
     ],
     "require": {
-        "craftcms/cms": "^3.0.0-RC14",
+        "craftcms/cms": "^3.0.0-RC14"
     },
     "extra": {
         "name": "Helpers",
