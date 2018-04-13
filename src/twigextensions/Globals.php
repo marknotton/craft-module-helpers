@@ -11,7 +11,7 @@ class Globals extends \Twig_Extension implements \Twig_Extension_GlobalsInterfac
   public function getGlobals()  {
 
     // Get settings from site specific and global config/settings.php files
-    $globals = Helpers::$instance->settings;
+    $globals = Helpers::$instance->services->getSettings();
 
     // Add all plugins with their enabled/disabled status
     $globals = array_merge($globals, Helpers::$instance->services->enabledPlugins());

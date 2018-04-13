@@ -114,7 +114,11 @@ class Svg extends Extension {
     // Sanitize?
     if ($sanitize) {
       $svg = (new Sanitizer())->sanitize($svg);
+      
+      // Remove the style declarations
+      $svg = preg_replace('/<style((.|\n|\r)*?)<\/style>/', '', $svg);
     }
+
 
     // Remove the XML declaration
     $svg = preg_replace('/<\?xml.*?\?>/', '', $svg);
