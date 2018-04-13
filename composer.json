@@ -1,8 +1,8 @@
 {
     "name": "marknotton/helpers",
-    "description": "Craft CMS 3.x helpers",
+    "description": "Craft CMS 3 helpers module",
     "type": "craft-module",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "keywords": [
         "craft",
         "cms",
@@ -21,12 +21,12 @@
         }
     ],
     "require": {
-        "craftcms/cms": "^3.0.0-RC14"
+        "craftcms/cms": "^3.0.0.2"
     },
     "extra": {
         "name": "Helpers",
         "handle": "helpers",
-        "schemaVersion": "1.0.0",
+        "schemaVersion": "1.0.1",
         "hasCpSettings": false,
         "hasCpSection": false,
         "changelogUrl": "https://github.com/marknotton/craft-module-helpers/blob/master/CHANGELOG.md",

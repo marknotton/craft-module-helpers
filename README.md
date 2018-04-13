@@ -1,52 +1,41 @@
-# Helpers module for Craft CMS 3.x
-
-TEST
+# Helpers module for Craft CMS 3
 
 ## Requirements
 
-This module requires Craft CMS 3.0.0-RC1 or later.
+This module requires Craft CMS 3.0.0 or later.
 
 ## Installation
 
 To install the module, follow these instructions.
 
-First, you'll need to add the contents of the `app.php` file to your `config/app.php` (or just copy it there if it does not exist). This ensures that your module will get loaded for each request. The file might look something like this:
+You will need to add the following content to your `config/app.php` file. This ensures that your module will get loaded for each request. You can remove components if you don't require the full set of features this module offers.
 ```
 return [
-    'modules' => [
-        'helpers-module' => [
-            'class' => \modules\helpersmodule\HelpersModule::class,
+  'modules' => [
+    'helpers' => [
+    'class' => \modules\helpers\Helpers::class,
+      'components' => [
+        'services' => [
+          'class' => 'modules\helpers\services\Services',
         ],
+        'queries' => [
+          'class' => 'modules\helpers\services\Queries',
+        ]
+      ],
     ],
-    'bootstrap' => ['helpers-module'],
+  ],
+  'bootstrap' => ['helpers'],
 ];
 ```
 You'll also need to make sure that you add the following to your project's `composer.json` file so that Composer can find your module:
 
-    "autoload": {
-        "psr-4": {
-          "modules\\helpersmodule\\": "modules/helpersmodule/src/"
-        }
-    },
+```
+"autoload": {
+  "psr-4": {
+    "modules\\": "modules/",
+    "modules\\helpers\\": "modules/helpers/module/"
+  }
+},
+```
 
-After you have added this, you will need to do:
-
-    composer dump-autoload
- 
- …from the project’s root directory, to rebuild the Composer autoload map. This will happen automatically any time you do a `composer install` or `composer update` as well.
-
-## Helpers Overview
-
--Insert text here-
-
-## Using Helpers
-
--Insert text here-
-
-## Helpers Roadmap
-
-Some things to do, and ideas for potential features:
-
-* Release it
-
-Brought to you by [Mark Notton](www.marknotton.uk)
+After you have added this, you may need to run `composer dump-autoload` from the project’s root directory to rebuild the Composer autoload map. This will happen automatically any time you do a `composer install` or `composer update` as well.
