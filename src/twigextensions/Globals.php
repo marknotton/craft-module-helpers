@@ -8,13 +8,18 @@ use Craft;
 
 class Globals extends \Twig_Extension implements \Twig_Extension_GlobalsInterface {
 
-    public function getGlobals()  {
+  public function getGlobals()  {
 
-        // $globals = Helpers::$instance->littleHelpersModuleService->getSettings();
-        // $globals[Helpers::$instance->alias] = Helpers::$instance->littleHelpersModuleService;
-        // // $globals['checkers'] = Helpers::$instance->Checkers;
-        // $globals['classes'] = Helpers::$instance->littleHelpersModuleService->classes;
-        return [];
-    }
+    // Get settings from site specific and global config/settings.php files
+    $globals = Helpers::$instance->settings;
+
+    // Add all plugins with their enabled/disabled status
+    $globals = array_merge($globals, Helpers::$instance->services->enabledPlugins());
+
+    // Expose the services class to avoid creating function aliases in the variables class.
+    $globals['helpers'] = Helpers::$instance->services;
+
+    return $globals;
+  }
 
 }

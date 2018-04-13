@@ -1,14 +1,14 @@
 <?php
 /**
- * helpers module for Craft CMS 3.x
+ * Helpers module for Craft CMS 3.x
  *
- * Little helpers to make life a little better
+ * fgdfgdg
  *
- * @link      https://www.marknotton.uk
+ * @link      www.marknotton.uk
  * @copyright Copyright (c) 2018 Mark Notton
  */
 
-namespace modules\helpers\assetbundles\Helpers;
+namespace modules\helpers\assets;
 
 use Craft;
 use craft\web\AssetBundle;
@@ -29,18 +29,14 @@ class HelpersAsset extends AssetBundle
      */
     public function init()
     {
-        $this->sourcePath = "@modules/helpers/assetbundles/helpers/dist";
+        $this->sourcePath = "@modules/helpers/assets";
 
         $this->depends = [
             CpAsset::class,
         ];
 
         $this->js = [
-            'js/HelpersModule.js',
-        ];
-
-        $this->css = [
-            'css/HelpersModule.css',
+            'scripts/HelpersModule.js',
         ];
 
         parent::init();
