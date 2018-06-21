@@ -2,7 +2,7 @@
 
 ## Requirements
 
-This module requires Craft CMS 3.0.0 or later.
+This module requires Craft 3
 
 ## Installation
 
@@ -13,29 +13,38 @@ You will need to add the following content to your `config/app.php` file. This e
 return [
   'modules' => [
     'helpers' => [
-    'class' => \modules\helpers\Helpers::class,
+      'class' => \modules\helpers\Helpers::class,
       'components' => [
-        'services' => [
-          'class' => 'modules\helpers\services\Services',
-        ],
-        'queries' => [
-          'class' => 'modules\helpers\services\Queries',
-        ]
+        'service' => [ 'class' => 'modules\helpers\services\Services' ],
+        'query'   => [ 'class' => 'modules\helpers\services\Queries'  ],
+        'request' => [ 'class' => 'modules\helpers\services\Requests' ]
       ],
-    ],
+    ]
   ],
   'bootstrap' => ['helpers'],
 ];
 ```
-You'll also need to make sure that you add the following to your project's `composer.json` file so that Composer can find your module:
+You'll also need to make sure that you incorporate the following to your project's `composer.json` file:
 
 ```
+"require": {
+  "oomphinc/composer-installers-extender": "^1.1",
+  "marknotton/helpers": "dev-master"
+},
 "autoload": {
   "psr-4": {
     "modules\\": "modules/",
     "modules\\helpers\\": "modules/helpers/module/"
   }
 },
+"extra": {
+  "installer-types": ["craft-module"],
+  "installer-paths": {
+    "modules/{$name}": ["type:craft-module"]
+  }
+},
 ```
+
+[Composer Installers Extender](https://github.com/oomphinc/composer-installers-extender) is what allows you to create your own [Package Type](https://github.com/composer/installers). The `craft-module` package type I'm using is not native to Craft, and there-for not supported by [Composer Installers](https://getcomposer.org/doc/faqs/how-do-i-install-a-package-to-a-custom-path-for-my-framework.md). Package types allow you to define `extra` settings that tell Composer to put this module into the `modules` directory. It's the only way you can reliably manage this module within your project.
 
 After you have added this, you may need to run `composer dump-autoload` from the project’s root directory to rebuild the Composer autoload map. This will happen automatically any time you do a `composer install` or `composer update` as well.
