@@ -2,36 +2,55 @@
 
 namespace modules\helpers;
 
-use modules\helpers\assets\HelpersAsset;
+use modules\helpers\assets\HelpersAssets;
 
 use modules\helpers\services\Services;
+use modules\helpers\services\Requests;
 use modules\helpers\services\Queries;
 
 use modules\helpers\variables\Variables;
+
+use modules\helpers\fields\Video;
+
 use modules\helpers\twigextensions\Filters;
 use modules\helpers\twigextensions\Svg;
+use modules\helpers\twigextensions\Snip;
+use modules\helpers\twigextensions\Checks;
+use modules\helpers\twigextensions\Transform;
+use modules\helpers\twigextensions\Tokens;
 use modules\helpers\twigextensions\Wrapper;
 use modules\helpers\twigextensions\Globals;
-
 use Craft;
-use craft\events\RegisterTemplateRootsEvent;
-use craft\events\TemplateEvent;
 use craft\i18n\PhpMessageSource;
+
+use craft\events\RegisterTemplateRootsEvent;
+use craft\events\RegisterComponentTypesEvent;
+use craft\events\RegisterUrlRulesEvent;
+use craft\events\TemplateEvent;
+
+use craft\services\Fields;
 use craft\web\View;
 use craft\web\UrlManager;
 use craft\web\twig\variables\CraftVariable;
-use craft\events\RegisterUrlRulesEvent;
 
 use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\base\Module;
+use yii\web\NotFoundHttpException;
 
 class Helpers extends Module {
 
-  public static $instance;
-  public $twig;
-  public $settings;
-  public $databaseConnected;
+  public static $app;
+  public static $twig;
+  public static $settings;
+  public static $config;
+  public static $general;
+  public static $database;
+  public static $element;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Construct
+  //////////////////////////////////////////////////////////////////////////////
 
   public function __construct($id, $parent = null, array $config = [])  {
 
@@ -50,18 +69,34 @@ class Helpers extends Module {
         'allowOverrides' => true,
       ];
     }
+    // Base template directory
+    Event::on(View::class, View::EVENT_REGISTER_CP_TEMPLATE_ROOTS, function (RegisterTemplateRootsEvent $e) {
+      if (is_dir($baseDir = $this->getBasePath().DIRECTORY_SEPARATOR.'templates')) {
+        $e->roots[$this->id] = $baseDir;
+      }
+    });
 
     static::setInstance($this);
 
     parent::__construct($id, $parent, $config);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Init
+  //////////////////////////////////////////////////////////////////////////////
 
   public function init()  {
 
     parent::init();
-    self::$instance = $this;
 
+    $view = Craft::$app->view;
+    self::$app      = $this;
+    self::$twig     = $view->getTwig();
+    self::$general  = Craft::$app->getConfig()->getGeneral();
+    self::$config   = Helpers::$app->request->getConfig();
+    self::$settings = Helpers::$app->request->getSettings();
+    self::$element  = Helpers::$app->request->getCurrentElement();
+    self::$database = Helpers::$app->query->isDatabaseConnected();
 
     Event::on(
       CraftVariable::class,
@@ -73,33 +108,65 @@ class Helpers extends Module {
       }
     );
 
-    $this->databaseConnected = Helpers::$instance->queries->databaseConnected();
+    Event::on(
+      Fields::class,
+      Fields::EVENT_REGISTER_FIELD_TYPES,
+      function (RegisterComponentTypesEvent $event) {
+        $event->types[] = Video::class;
+      }
+    );
 
-    Craft::$app->view->registerTwigExtension(new Filters());
-    Craft::$app->view->registerTwigExtension(new Svg());
-    Craft::$app->view->registerTwigExtension(new Wrapper());
-    Craft::$app->view->registerTwigExtension(new Globals());
+    // Add versioning class if versioning is enabled in the config.json
+    if ( self::$config['versioning'] ?? false ) {
+      self::$app->setComponents([
+        'versioning' => \modules\helpers\services\Versioning::class
+      ]);
+    }
 
-    $generalConfig = Craft::$app->getConfig()->getGeneral();
-    if ( $generalConfig->enableCsrfProtection !== false ) {
+    $view->registerTwigExtension(new Filters($view,   Helpers::$twig));
+    $view->registerTwigExtension(new Svg($view,       Helpers::$twig));
+    $view->registerTwigExtension(new Wrapper($view,   Helpers::$twig));
+    $view->registerTwigExtension(new Snip($view,      Helpers::$twig));
+    $view->registerTwigExtension(new Tokens($view,    Helpers::$twig));
+    $view->registerTwigExtension(new Transform($view, Helpers::$twig));
+    $view->registerTwigExtension(new Checks($view,    Helpers::$twig));
+    $view->registerTwigExtension(new Globals($view,   Helpers::$twig));
 
-      // Add CSRF Token information
-      $csrfTokenName = $generalConfig->csrfTokenName;
-      $csrfTokenValue = Craft::$app->getRequest()->getCsrfToken();
 
-      $js = 'window.csrfTokenName = "'.$csrfTokenName.'"; ';
-      $js .= 'window.csrfTokenValue = "'.$csrfTokenValue.'";';
+    // Run these within the CMS backend. Not the frontend.
+    if (Craft::$app->getRequest()->getIsCpRequest()) {
+      Event::on(
+        View::class,
+        View::EVENT_BEFORE_RENDER_TEMPLATE,
+        function (TemplateEvent $event) {
+          try {
+            Craft::$app->getView()->registerAssetBundle(HelpersAssets::class);
+          } catch (InvalidConfigException $e) {
+            Craft::error(
+              'Error registering AssetBundle - '.$e->getMessage(),
+              __METHOD__
+            );
+          }
+        }
+      );
 
-      Craft::$app->getView()->registerJs($js, View::POS_HEAD);
+      Helpers::$app->service->themer();
+
+      Helpers::$app->service->installation();
+
+    } else {
+      // Run these only in the frontend
+
+      // In instances where the directory structure matches the uri to a disabled page in the CMS,
+      // non-admins should be reirected to a 404. Otherwise disabled pages would be accessible.
+      $element = Helpers::$app->request->getCurrentElement() ?? false;
+      if ( !empty($element) && $element->status == 'disabled' && !Helpers::$app->request->admin() ) {
+        throw new NotFoundHttpException('You do not have access to this page. It may be disabled in the CMS.');
+      }
 
     }
 
-    $this->twig = Craft::$app->view->getTwig();
-    $this->addTests($this->twig);
-    // $this->tests($this->twig);
-
-
-    // Register our site routes
+    // Register site routes
     Event::on(
       UrlManager::class,
       UrlManager::EVENT_REGISTER_SITE_URL_RULES,
@@ -116,39 +183,6 @@ class Helpers extends Module {
       ),
       __METHOD__
     );
-  }
-
-  // TODO: Find a way to move this into it's own file.
-  private function addTests($twig) {
-    // Is String
-    $twig->addTest(new \Twig_SimpleTest('string', function ($value) {
-      return is_string($value);
-    }));
-
-    // Is Number
-    $twig->addTest(new \Twig_SimpleTest('number', function ($value) {
-      return is_numeric($value) && (intval($value) == $value || floatval($value) == $value);
-    }));
-
-    // Is blank - is defined and is not empty
-    $twig->addTest(new \Twig_SimpleTest('blank', function ($value) {
-      return empty($value) || strlen(trim($value)) === 0;
-    }));
-
-    // Is Array
-    $twig->addTest(new \Twig_SimpleTest('array', function ($value) {
-      return is_array($value);
-    }));
-
-    // Is Object
-    $twig->addTest(new \Twig_SimpleTest('object', function ($value) {
-      return is_object($value);
-    }));
-
-    // Is URL
-    $twig->addTest(new \Twig_SimpleTest('url', function ($value) {
-      return filter_var($value, FILTER_VALIDATE_URL);
-    }));
   }
 
 }

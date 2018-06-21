@@ -1,0 +1,15 @@
+{% do view.registerAssetBundle("modules\\helpers\\assets\\VideoAssets") %}
+
+{% import "_includes/forms" as forms %}
+
+{% for handle, format in field.formats %}
+	{{ forms.lightswitchField({
+	    label: format.name|t,
+      instructions: 'By enabling this switch, you will allow users to submit '~format.name~' videos.',
+	    id: handle,
+	    name: handle,
+	    value: handle,
+	    on: (field[handle] is defined ? field[handle] : "")
+	  })
+	}}
+{% endfor %}

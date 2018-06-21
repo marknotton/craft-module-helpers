@@ -6,6 +6,7 @@ use modules\helpers\Helpers;
 
 use Craft;
 use craft\web\Controller;
+use craft\elements\Entry;
 
 class FetchController extends Controller {
 
@@ -41,30 +42,31 @@ class FetchController extends Controller {
     ];
 
     if(!empty($template)){
+
       try{
 
-        $settings = Helpers::$instance->services->getSettings();
+        $settings = Helpers::$app->request->getSettings();
         $response['success'] = true;
         $response['message'] = 'Template '.$template.' found';
 
         // If a section key was passed. Assume an entry has attempted to be rendered
-        if (!empty($section)) {
-          $entry = Entry::find()->section($section)->one();
-          $settings['entry'] = $entry;
+        if (!empty($section) && is_string($section)) {
+          $settings['section'] = Craft::$app->getSections()->getSectionByHandle($section);
+        }
+
+        if (!empty($id)) {
+          if ( is_array($id) && count($id) > 1 ) {
+            $settings['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
+          } else {
+            $settings['entry'] = Entry::find()->id($id)->section($section ?? null)->one();
+          }
         }
 
         // These variables will be accessible in the rendered template
         $variables = array_merge($settings, (array)$data);
 
         $response['html'] = Craft::$app->getView()->renderTemplate($template, $variables);
-
-      } catch(\Twig_Error_Loader $e) {
-
-        $response['error'] = true;
-        unset($response['success']);
-        $response['message'] = $e->getMessage();
-
-      } catch(\yii\base\Exception $e) {
+      } catch(\Exception $e) {
 
         $response['error'] = true;
         unset($response['success']);
@@ -72,6 +74,7 @@ class FetchController extends Controller {
 
       }
     }
+
     return $this->asJson($response);
 
   }

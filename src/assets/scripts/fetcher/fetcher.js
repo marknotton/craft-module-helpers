@@ -61,6 +61,7 @@ class TemplateFetcher {
             } else {
               console.error('Error:', data)
             }
+            return data;
           },
           error (data) {
             console.error('Template Error:', data.responseJSON.error)
@@ -82,21 +83,23 @@ class TemplateFetcher {
           body: JSON.stringify(args),
           credentials: 'same-origin'
         })
-          .then(response => {
-            return response.json().then(data => {
-              if (response.ok) {
-                if ($this.settings.dev) {
-                  console.log('Success:', data)
-                }
-                callback(data)
-                return data
-              } else {
-                console.error('Error:', data.error)
-                return Promise.reject({status: response.status, data})
+        .then(response => {
+          return response.json().then(data => {
+            if (response.ok && !data.error) {
+              if ($this.settings.dev) {
+                console.log('Success:', data)
               }
-            })
+              callback(data)
+              return data
+            } else {
+              return Promise.reject({status: response.status, data})
+            }
           })
-          .catch(error => console.error('Error:', error))
+        })
+        .catch(error => {
+          callback(error.data)
+          console.error('Error:', error.data.message)
+        })
       }
     }
   }

@@ -2,48 +2,76 @@
 
 namespace modules\helpers\twigextensions;
 
+use Craft;
 use modules\helpers\Helpers;
 use craft\helpers\ElementHelper;
 use craft\helpers\FileHelper;
 use craft\helpers\StringHelper;
-use craft\helpers\Template as TemplateHelper;
+use craft\helpers\Template;
 use enshrined\svgSanitize\Sanitizer;
 use craft\web\twig\Extension;
-use Craft;
 
 class Svg extends Extension {
 
-  public function __construct(){ }
-  public function getGlobals() { return []; }
-
-  public function getFunctions() {
+  public function getFunctions():array {
     return [
-      new \Twig_SimpleFunction('svg', [$this, 'svg']),
-      new \Twig_SimpleFunction('sprite', [$this, 'symbol']),
-      new \Twig_SimpleFunction('symbol', [$this, 'symbol']),
+      new \Twig_SimpleFunction('svg',       [$this, 'svg']),
+      new \Twig_SimpleFunction('sprite',    [$this, 'symbol']),
+      new \Twig_SimpleFunction('symbol',    [$this, 'symbol']),
       new \Twig_SimpleFunction('svgLegacy', [$this, 'svgFunction']),
     ];
   }
 
 
   /**
-   * Return the contetns of an SVG
-   * Remove numbers from the start. Lower case.
+   * Return the contetns of an SVG. This adds checks and fallbacks to help made
+   * defining SVG's more reliable. However, you can use the exact syntax as
+   * the Craft's stock svg function too.
    *
    * @param string $svg Add the svg content directly. Or add the filename, with or without a path or extension.
-   * @param string|bool $classes Define any number of classes to add to the SVG. Defined 'true' if you want to use the files basename instead
-   * @param string|bool $id Define an ID to be added to the SVG. Defined 'true' if you want to use the files basename instead
+   * @param string $classes Define any number of classes to add to the SVG.
+   * @param string $id Define an ID to be added to the SVG.
    * @param bool $sanitize Define an ID to be added to the SVG. Defined 'true' if you want to use the files basename instead
    *
    * @return string
    *
    */
-  public function svg(string $svg, $classes = null, $id = null, bool $sanitize = true) {
+  public function svg() {
+
+    // Fail if no parameters are passed
+    if ( func_num_args() < 1 ){
+      return false;
+    }
+
+		// The first argument is the svg that is automatically passed.
+    $svg = (string) func_get_arg(0);
+
+    // Remove the first argument and set the arguments array
+    $arguments = array_slice(func_get_args(), 1);
+
+		$sanitize = true;
+    $classes  = null;
+		$id       = null;
+
+		// Run through the settings and define the appropriate variables
+    if ( isset($arguments) ){
+      foreach ($arguments as &$setting) {
+        if (gettype($setting) == 'boolean') {
+          $sanitize = $setting;
+        } elseif (gettype($setting) == 'string') {
+          if ( $classes == null ) {
+            $classes = $setting;
+          } elseif ( $id == null ) {
+            $id = $setting;
+          }
+        }
+      }
+    }
+
 
     if (stripos($svg, '<svg') === false) {
-
-      $sprites = ltrim(Helpers::$instance->settings['sprites'], '/') ?? 'assets/images/sprites/' ;
-      $images = ltrim(Helpers::$instance->settings['images'], '/') ?? 'assets/images/' ;
+      $sprites = ltrim(Helpers::$settings['sprites'] ?? 'assets/images/sprites/', '/');
+      $images = ltrim(Helpers::$settings['images'] ?? 'assets/images/', '/');
       $filename = basename($svg, ".svg");
 
       $svg = (strlen($svg) > 4 && substr($svg, -4) == '.svg') ? $svg : $svg.'.svg';
@@ -65,10 +93,6 @@ class Svg extends Extension {
 
     }
 
-    // If classes or Id is passed with 'true', the refer to the filename as it's class or id name
-    $classes = $classes === true && !empty($filename) ? $filename : $classes;
-    $id = $id === true && !empty($filename) ? $filename : $id;
-
     if ( !empty($classes) || !empty($id) ) {
 
       $dom = new \DomDocument();
@@ -81,17 +105,17 @@ class Svg extends Extension {
           if ($existingClasses = $element->getAttribute('class')) {
 
             // Array of classes to add
-            $newClasses = Helpers::$instance->services->sanitiseClasses($classes);
+            $newClasses = Helpers::$app->service->sanitiseClasses($classes);
 
             // Array of existing classes
-            $existingClasses = Helpers::$instance->services->sanitiseClasses($existingClasses);
+            $existingClasses = Helpers::$app->service->sanitiseClasses($existingClasses);
 
             // Set the class attribute, whilst excluding any duplicates
-            $element->setAttribute('class', Helpers::$instance->services->sanitiseClasses($newClasses.' '.$existingClasses));
+            $element->setAttribute('class', Helpers::$app->service->sanitiseClasses($newClasses.' '.$existingClasses));
 
           } else {
 
-            $element->setAttribute('class', Helpers::$instance->services->sanitiseClasses($classes));
+            $element->setAttribute('class', Helpers::$app->service->sanitiseClasses($classes));
 
           }
         }
@@ -114,7 +138,7 @@ class Svg extends Extension {
     // Sanitize?
     if ($sanitize) {
       $svg = (new Sanitizer())->sanitize($svg);
-      
+
       // Remove the style declarations
       $svg = preg_replace('/<style((.|\n|\r)*?)<\/style>/', '', $svg);
     }
@@ -123,7 +147,7 @@ class Svg extends Extension {
     // Remove the XML declaration
     $svg = preg_replace('/<\?xml.*?\?>/', '', $svg);
 
-    return TemplateHelper::raw($svg);
+    return Template::raw($svg);
 
   }
 
@@ -142,7 +166,7 @@ class Svg extends Extension {
 
     if ( !empty($classes) ) {
 
-       $classes = $classes === true ? $symbol : Helpers::$instance->services->sanitiseClasses($classes);
+       $classes = $classes === true ? $symbol : Helpers::$app->service->sanitiseClasses($classes);
        $classes = ' class="'.$classes.'"';
     }
 
@@ -152,7 +176,7 @@ class Svg extends Extension {
 
     $symbol = '<svg'.$classes.$id.'><use xlink:href="#'.$symbol.'"></use></svg>';
 
-    return TemplateHelper::raw($symbol);
+    return Template::raw($symbol);
   }
 
 }

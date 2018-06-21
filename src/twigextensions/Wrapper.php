@@ -9,14 +9,9 @@ use Craft;
 
 class Wrapper extends \Twig_Extension {
 
-  private $tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'ol', 'ul', 'li', 'div', 'pre', 'section'];
+  private $tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'ol', 'ul', 'li', 'div', 'pre', 'section', 'footer'];
   private $singletons = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta','param', 'source'];
 
-  /**
-  * Generates all the wrapper filter methods dynamically
-  *
-  * @return array
-  */
   public function getFilters() {
 
     $filters = [

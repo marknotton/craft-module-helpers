@@ -1,0 +1,13 @@
+{% do view.registerAssetBundle("modules\\helpers\\assets\\VideoAssets") %}
+
+{% import "_includes/forms" as forms %}
+
+{{ forms.textField({
+	id: id,
+  instructions: 'Enter a website url here',
+	name: name,
+	value: value.url ?? value,
+	placeholder: 'https://www.youtube.com/watch?v=-onYzz-M1cA',
+}) }}
+
+<div id="{{namespacedId}}-notice" style="margin: 2px 0 1em 0; color: #8f98a3; font-size:11px"><p></p></div>

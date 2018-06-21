@@ -1,0 +1,41 @@
+#modules-helpers-fields-Video label[for*="fields-Video"]:before {
+  content:"";
+  width:20px;
+  height:20px;
+  position: relative;
+  top:5px;
+  display:inline-block;
+  margin-right:8px;
+  background-position: center center;
+  background-repeat:no-repeat;
+  background-size:100% auto;
+}
+#modules-helpers-fields-Video label[for$="youtube"]:before {
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48cGF0aCBmaWxsPSIjQ0QxRjFGIiBkPSJNMTIxLjcsMjIuNWMtMy44LTMuMS0xMy45LTQuNy0zMC4xLTQuN0gzNi4zYy0xNi4yLDAtMjYuMSwxLjYtMjkuOSw0LjdDMi4xLDI2LDAsMzUuMiwwLDQ5Ljl2MjcuOWMwLDE0LjksMi4xLDI0LjIsNi4zLDI3LjdjMy44LDMuMSwxMy44LDQuNywyOS45LDQuN2g1NS4yYzE2LjIsMCwyNi4xLTEuNiwyOS45LTQuN2M0LjMtMy41LDYuNS0xMi44LDYuNS0yNy43VjUwLjRDMTI4LDM1LjQsMTI1LjksMjYuMSwxMjEuNywyMi41eiBNNTAuOCw4Ni42VjM5bDM2LjUsMjMuOEw1MC44LDg2LjZ6Ii8+PC9zdmc+);
+}
+
+#modules-helpers-fields-Video label[for$="dailymotion"]:before {
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDEyOCAxMjgiPjxwYXRoIGZpbGw9IiMwMDY2REMiIGQ9Ik03NS4xLDYwLjNjLTkuNCwwLTE2LjYsNy42LTE2LjYsMTYuNmMwLDkuNCw3LjIsMTYuNSwxNy4zLDE2LjVjOC41LDAsMTUuNi03LDE1LjYtMTYuMkM5MS40LDY3LjYsODQuMyw2MC4zLDc1LjEsNjAuM3ogTTExMC40LDExMC44SDkxLjN2LTcuNWMtNS45LDUuNy0xMS44LDcuOS0xOS44LDcuOWMtOC4xLDAtMTUuMS0yLjYtMjAuOS03LjlDNDIuOCw5Ni41LDM4LjgsODcuNSwzOC44LDc3YzAtOS42LDMuNy0xOC4yLDEwLjctMjQuOWM2LjItNi4xLDEzLjgtOS4yLDIyLjMtOS4yYzguMSwwLDE0LjMsMi43LDE4LjgsOC41VjIyLjJsMTkuNy00LjFMMTEwLjQsMTEwLjhMMTEwLjQsMTEwLjh6IE0wLDEyOGgxMjhWMEgwVjEyOHoiLz48L3N2Zz4=);
+}
+
+#modules-helpers-fields-Video label[for$="vimeo"]:before {
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48cGF0aCBmaWxsPSIjYWFkNDUwIiBkPSJNMTIyLjcsMTMuNWMtNC4yLTQuMi0xMC01LjktMTcuNC01Yy03LjQsMC43LTE0LjEsMy42LTIwLDguOGMtNi42LDUuNi0xMC42LDEyLjUtMTIsMjAuOGM3LjEtNC4yLDEyLjQtNC4xLDE1LjgsMC40YzMuNCw0LjIsMy4xLDkuOS0wLjgsMTcuMmMtOC40LDE1LjQtMTQuNCwyMy4xLTE3LjksMjMuMWMtMS43LDAtMy40LTIuMi01LTYuN2MtMS4zLTMuNS0zLTkuOS01LjMtMTkuMWMtMi4xLTEzLjMtNC4xLTIzLTUuOS0yOS4yYy0zLjItMTEuMi04LjUtMTYtMTYtMTQuNWMtNi45LDEuMy0xNS4zLDYuNS0yNS40LDE1LjdMMC4xLDM4LjVsNS4zLDYuN2w1LjktMy42YzQuMS0yLjEsNi45LTIuMyw4LjQtMC42YzEuMywxLjUsNC44LDExLjcsMTAuNSwzMC40YzYuMiwyMCw5LjksMzEuNCwxMS4xLDM0LjJjMi41LDUuMiw2LDkuMSwxMC41LDExLjhjNS41LDMuMiwxMC45LDMuMSwxNi40LTAuNGM5LjktNi4zLDIwLjQtMTYsMzEuNS0yOWMxNS4zLTE4LjEsMjQuNS0zNS44LDI3LjctNTMuMUMxMjksMjUuNSwxMjcuNSwxOC40LDEyMi43LDEzLjV6Ii8+PC9zdmc+);
+}
+
+.lightswitch:not(.dragging).on[id$="youtube"] .label.off,
+.lightswitch:not(.dragging).on[id$="dailymotion"] .label.off,
+.lightswitch:not(.dragging).on[id$="vimeo"] .label.off
+{
+  background-color:#9da5af;
+}
+.lightswitch[id$="youtube"] .label.on {
+  background-color:#CD1F1F;
+}
+
+.lightswitch[id$="dailymotion"] .label.on {
+  background-color:#0066DC;
+}
+
+.lightswitch[id$="vimeo"] .label.on {
+  background-color:#aad450;
+}
