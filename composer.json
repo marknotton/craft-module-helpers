@@ -20,9 +20,6 @@
             "homepage": "https://github.com/marknotton/craft-module-helpers"
         }
     ],
-    "require": {
-        "craftcms/cms": "^3.0.0"
-    },
     "extra": {
         "name": "Helpers",
         "handle": "helpers",
