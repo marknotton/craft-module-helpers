@@ -14,11 +14,10 @@
         "issues": "https://github.com/marknotton/craft-module-helpers"
     },
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Mark Notton",
-            "homepage": "https://github.com/marknotton/craft-module-helpers"
-        }
+    "authors": [{
+        "name": "Mark Notton",
+        "homepage": "https://github.com/marknotton/craft-module-helpers"
+      }
     ],
     "extra": {
         "name": "Helpers",
