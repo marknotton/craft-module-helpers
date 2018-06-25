@@ -170,7 +170,7 @@ class Svg extends Extension {
   public function symbol(string $symbol, $classes = true, $id = null, $autoPrefix = true) {
 
     if ( !empty($autoPrefix) ) {
-      $prefix = Helpers::$settings['filenames']['svg']['prefix'].'-' ?? 'icon-';
+      $prefix = isset(Helpers::$settings['filenames']['svg']['prefix']) ? Helpers::$settings['filenames']['svg']['prefix'].'-' : 'icon-';
       $symbol = $prefix.(ltrim($symbol, $prefix));
     }
 

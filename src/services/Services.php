@@ -69,7 +69,7 @@ class Services extends Component {
       $data = $data->getParsedContent();
     }
 
-    $regex = '~<((?!iframe|canvas)\w+)[^>]*>(?>[\p{Z}\p{C}]|<br\b[^>]*>|&(?:(?:nb|thin|zwnb|e[nm])sp|zwnj|#xfeff|#xa0|#160|#65279);|(?R))*</\1>~ui';
+    $regex = '~<((?!iframe|canvas|use)\w+)[^>]*>(?>[\p{Z}\p{C}]|<br\b[^>]*>|&(?:(?:nb|thin|zwnb|e[nm])sp|zwnj|#xfeff|#xa0|#160|#65279);|(?R))*</\1>~ui';
 
     $clensed = preg_replace($regex, '', $data);
 
