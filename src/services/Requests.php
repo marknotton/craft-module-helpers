@@ -398,9 +398,8 @@ class Requests extends Component {
     }
 
     if (empty($element)) {
-      $element = Helpers::$app->element ?? null;
+      $element = Helpers::$app->request->getCurrentElement() ?? null;
     }
-
     if (!empty($element)) {
 
       $classes[] = $element->slug;
@@ -409,7 +408,7 @@ class Requests extends Component {
 
       // Options to define what data to query for each data type
       $query = [
-        'element' => ['id', 'parent', 'child'],
+        'element' => ['id', 'parent', 'child', 'type'],
         'section' => ['type', 'handle'],
         'group' => ['type', 'handle'],
       ];

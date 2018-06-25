@@ -22,7 +22,6 @@ class Svg extends Extension {
     ];
   }
 
-
   /**
    * Return the contetns of an SVG. This adds checks and fallbacks to help made
    * defining SVG's more reliable. However, you can use the exact syntax as
@@ -68,15 +67,21 @@ class Svg extends Extension {
       }
     }
 
-
     if (stripos($svg, '<svg') === false) {
-      $sprites = ltrim(Helpers::$settings['sprites'] ?? 'assets/images/sprites/', '/');
-      $images = ltrim(Helpers::$settings['images'] ?? 'assets/images/', '/');
-      $filename = basename($svg, ".svg");
 
+      $assetReference = false;
+
+      if (strstr(ltrim($svg, '/'), '/')) {
+        $assetReference = true;
+        $svg = ltrim($svg, '/');
+      }
+
+      $sprites = $assetReference !== true ? ltrim(Helpers::$settings['sprites'] ?? 'assets/images/sprites/', '/') : '';
+      $images = $assetReference !== true ? ltrim(Helpers::$settings['images'] ?? 'assets/images/', '/') : '';
+
+      $filename = basename($svg, ".svg");
       $svg = (strlen($svg) > 4 && substr($svg, -4) == '.svg') ? $svg : $svg.'.svg';
       $svg = Craft::getAlias($svg);
-
       if (!is_file($svg) && !is_file($sprites . '/' . $svg) && !is_file($images . '/' . $svg)) {
         return false;
       }
@@ -92,6 +97,7 @@ class Svg extends Extension {
       $svg = file_get_contents($svg);
 
     }
+
 
     if ( !empty($classes) || !empty($id) ) {
 
@@ -143,7 +149,6 @@ class Svg extends Extension {
       $svg = preg_replace('/<style((.|\n|\r)*?)<\/style>/', '', $svg);
     }
 
-
     // Remove the XML declaration
     $svg = preg_replace('/<\?xml.*?\?>/', '', $svg);
 
@@ -151,21 +156,25 @@ class Svg extends Extension {
 
   }
 
-
   /**
    * Add a SVG Symbol
    *
    * @param string $svg Add the svg content directly. Or add the filename, with or without a path or extension.
    * @param string|bool $classes Define any number of classes to add to the SVG. Defined 'true' if you want to use the files basename instead
    * @param string|bool $id Define an ID to be added to the SVG. Defined 'true' if you want to use the files basename instead
+   * @param string|bool $autoPrefix Prefix the symbol string with the 'prefix' setting defined in the config.json (filesnames > svg > prefix)
    *
    * @return string
    *
    */
-  public function symbol(string $symbol, $classes = true, $id = null) {
+  public function symbol(string $symbol, $classes = true, $id = null, $autoPrefix = true) {
+
+    if ( !empty($autoPrefix) ) {
+      $prefix = Helpers::$settings['filenames']['svg']['prefix'].'-' ?? 'icon-';
+      $symbol = $prefix.(ltrim($symbol, $prefix));
+    }
 
     if ( !empty($classes) ) {
-
        $classes = $classes === true ? $symbol : Helpers::$app->service->sanitiseClasses($classes);
        $classes = ' class="'.$classes.'"';
     }

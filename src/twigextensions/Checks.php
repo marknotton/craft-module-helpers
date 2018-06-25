@@ -99,7 +99,7 @@ class Checks extends \Twig_Extension {
   public function __call($type, $element) {
 
     if (in_array($type, $this->elements)){
-      return Helpers::$app->services->getElementType($element[0], $type);
+      return Helpers::$app->service->getElementType($element[0], $type);
     }
   }
 
