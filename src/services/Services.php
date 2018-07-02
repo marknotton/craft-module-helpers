@@ -69,7 +69,7 @@ class Services extends Component {
       $data = $data->getParsedContent();
     }
 
-    $regex = '~<((?!iframe|canvas|use)\w+)[^>]*>(?>[\p{Z}\p{C}]|<br\b[^>]*>|&(?:(?:nb|thin|zwnb|e[nm])sp|zwnj|#xfeff|#xa0|#160|#65279);|(?R))*</\1>~ui';
+    $regex = '~<((?!iframe|canvas|use|textarea|featured-image|select)\w+)[^>]*>(?>[\p{Z}\p{C}]|<br\b[^>]*>|&(?:(?:nb|thin|zwnb|e[nm])sp|zwnj|#xfeff|#xa0|#160|#65279);|(?R))*</\1>~ui';
 
     $clensed = preg_replace($regex, '', $data);
 
@@ -187,6 +187,21 @@ class Services extends Component {
         Craft::$app->getView()->registerJs('var site = {name:"'.$current->name.'",handle:"'.$current->handle.'"}', \yii\web\View::POS_HEAD);
       }
     }
+  }
+
+  /**
+   * Format a data size into a legible string
+   * @param  [number] $size [description]
+   * @return [string]
+   */
+  public function formatSize($size) {
+      $sizes = ['B','KB','MB','GB','TB','PB'];
+      $key=0;
+      while($size > 1024) {
+          $size /= 1024;
+          $key++;
+      }
+      return number_format($size,2).$sizes[$key];
   }
 
   //////////////////////////////////////////////////////////////////////////////

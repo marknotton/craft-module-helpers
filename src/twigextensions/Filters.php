@@ -10,9 +10,11 @@ class Filters extends \Twig_Extension {
   public function getFilters() {
     return [
       new \Twig_SimpleFilter('criteria', [$this, 'criteriaFilter']),
+      new \Twig_SimpleFilter('getAttributes', [$this, 'getAttributes']),
       new \Twig_SimpleFilter('unique', [$this, 'unique']),
       new \Twig_SimpleFilter('json_decode', [$this, 'jsonDecode']),
       new \Twig_SimpleFilter('type', [$this, 'getType']),
+      new \Twig_SimpleFilter('ucfirst', [$this, 'uppercaseFirstWord']),
       new \Twig_SimpleFilter('count', [$this, 'count'], ['is_safe' => ['html']]),
       new \Twig_SimpleFilter('cleanup', [$this, 'cleanup'], ['is_safe' => ['html']] )
     ];
@@ -29,6 +31,10 @@ class Filters extends \Twig_Extension {
     } else {
       return $array;
     }
+  }
+
+  public function uppercaseFirstWord(string $string)  {
+      return ucfirst(strtolower($string));
   }
 
   public function getType($variable)  {
@@ -87,14 +93,62 @@ class Filters extends \Twig_Extension {
   *
   * @return array
   */
-  public function criteriaFilter(array $array, $criteria)  {
-    return array_filter($array, function($array_value) use($criteria) {
+  public function criteriaFilter(array $array, $criteria, $matches = true)  {
+    if (gettype($criteria) == 'string') {
+      return array_filter($array, function($array_value) use($criteria, $matches) {
+        if ( $matches === true ) {
+          return (isset($array_value, $criteria) || property_exists($array_value, $criteria)) && empty($array_value->$criteria);
+        } else {
+          return (isset($array_value, $criteria) || property_exists($array_value, $criteria)) && !empty($array_value->$criteria);
+        }
+      });
+    } else {
+      return array_filter($array, function($array_value) use($criteria, $matches) {
+        foreach($criteria as $attribute => $value) {
+          if ( $matches === true ) {
+            return (isset($array_value, $attribute) || property_exists($array_value, $attribute)) && $array_value->$attribute == $value;
+          } else {
+            return (isset($array_value, $attribute) || property_exists($array_value, $attribute)) && $array_value->$attribute != $value;
+          }
+        }
+      });
+    }
+  }
+
+  /**
+  * Filter an object of arrays down by specific criteria
+  *
+  * @example
+  * {% set news = craft.entries.section('news').all() %}
+  * {% set expired = news|criteria({'status':'expired'}) %}
+  *
+  * {% set noImages = news|criteria({'featured':''}, false) %}
+  *
+  *
+  *
+  * @return array
+  */
+  public function criteriaOldFilter(array $array, $criteria, $matches = true)  {
+    return array_filter($array, function($array_value) use($criteria, $matches) {
       $status = false;
       foreach($criteria as $attribute => $value) {
-        $status |= (isset($array_value->$attribute) && $array_value->$attribute == $value);
+        $matchedValue = $matches ? $array_value->$attribute == $value : $array_value->$attribute != $value;
+        $status |= (isset($array_value, $attribute) && $matchedValue);
       }
       return $status;
     });
+  }
+
+  public function getAttributes(array $array, $key) {
+    $attributes = [];
+
+    foreach ($array as &$value) {
+      if ( isset($value->$key)) {
+        array_push($attributes, $value->$key);
+      }
+    }
+
+    return !empty($attributes) ? $attributes : null;
   }
 
 }

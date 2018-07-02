@@ -2,7 +2,7 @@
 
   /* Login */
   body.login { background:linear-gradient(to top, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('/assets/images/login-background.jpg') center center / cover no-repeat, url('/assets/images/default-featured.jpg') center center / cover no-repeat; }
-  #login-form { background-image:url('/assets/images/logo.svg') !important}
+  /* #login-form { background-image:url('/assets/images/logo.svg') !important} */
 
   /* Redactor */
   .input .redactor-styles h1, .redactor-dropdown-item-h1 span { font-size:38px !important; line-height:30px !important; color:var(--primary) !important; }
