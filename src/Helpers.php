@@ -116,6 +116,15 @@ class Helpers extends Module {
       }
     );
 
+    // Event::on(SystemMessages::class, SystemMessages::EVENT_REGISTER_MESSAGES, function(RegisterEmailMessagesEvent $event) {
+    //   $event->messages[] = [
+    //     'key'     => 'my_message_key',
+    //     'heading' => Craft::t('core-module', 'Email Heading'),
+    //     'subject' => Craft::t('core-module', 'Email Subject'),
+    //     'body'    => Craft::t('core-module', 'The plain text email body...'),
+    //   ];
+    // });
+
     // Add versioning class if versioning is enabled in the config.json
     if ( self::$config['versioning'] ?? false ) {
       self::$app->setComponents([
