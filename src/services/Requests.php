@@ -160,7 +160,7 @@ class Requests extends Component {
       return $cache;
     }
 
-    if ( Helpers::$database ?? true ) {
+    if ( Helpers::$database ?? false ) {
 
       if ($siteId === null ) {
         $sites = Craft::$app->getSites();
