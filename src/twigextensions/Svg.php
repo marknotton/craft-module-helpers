@@ -107,6 +107,7 @@ class Svg extends Extension {
       foreach ($elements = $dom->getElementsByTagName('svg') as $i=>$element) {
 
         if (!empty($classes)) {
+          
           // Check is there are any existing classes and add to them
           if ($existingClasses = $element->getAttribute('class')) {
 
@@ -171,7 +172,11 @@ class Svg extends Extension {
 
     if ( !empty($autoPrefix) ) {
       $prefix = isset(Helpers::$settings['filenames']['svg']['prefix']) ? Helpers::$settings['filenames']['svg']['prefix'].'-' : 'icon-';
-      $symbol = $prefix.(ltrim($symbol, $prefix));
+      if (substr($symbol, 0, strlen($prefix)) == $prefix) {
+        $symbol = $prefix.substr($symbol, strlen($prefix));
+      } else {
+        $symbol = $prefix.$symbol;
+      }
     }
 
     if ( !empty($classes) ) {
