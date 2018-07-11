@@ -107,7 +107,7 @@ class Svg extends Extension {
       foreach ($elements = $dom->getElementsByTagName('svg') as $i=>$element) {
 
         if (!empty($classes)) {
-          
+
           // Check is there are any existing classes and add to them
           if ($existingClasses = $element->getAttribute('class')) {
 
