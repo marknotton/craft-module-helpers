@@ -463,7 +463,7 @@ class Requests extends Component {
     $classes[] = getenv('ENVIRONMENT') ? getenv('ENVIRONMENT').'-environment' : false;
 
     // Remove any classnames that match the pagename
-    // $classes = array_diff($classes, [$this->page()]);
+    $classes = array_diff($classes, [$this->page()]);
 
     // Clean up classes
     $classes = Helpers::$app->service->sanitiseClasses($classes);
@@ -478,7 +478,7 @@ class Requests extends Component {
   /**
    * If there are no segments in the URL, assume the current page is the homepage
    *
-   * @return bool
+   * @return string
    */
   public function page() {
 
@@ -490,9 +490,11 @@ class Requests extends Component {
       return 'holding-page';
     } elseif ($this->homepage()){
       return 'home';
+    } elseif ($this->getCurrentElement() ?? false) {
+      return $this->getCurrentElement()->slug;
     } else {
-      // TODO: Fine a way to revert to the last array element on pages that don't return a currentElement and only have one segment (login page for example)
-      return ($this->getCurrentElement() ?? false) ? $this->getCurrentElement()->slug : Craft::$app->getRequest()->getSegments()[0];
+      $segments = Craft::$app->getRequest()->getSegments();
+      return count($segments) > 1 ? end($segments) : $segments[0];
     }
   }
 
