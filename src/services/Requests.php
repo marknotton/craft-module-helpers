@@ -160,7 +160,7 @@ class Requests extends Component {
       return $cache;
     }
 
-    if ( Helpers::$database ?? false ) {
+    if ( Helpers::$app->query->isDatabaseConnected() ?? false ) {
 
       if ($siteId === null ) {
         $sites = Craft::$app->getSites();
@@ -396,6 +396,7 @@ class Requests extends Component {
         }
       }
     }
+
 
     if (empty($element)) {
       $element = Helpers::$app->request->getCurrentElement() ?? null;
