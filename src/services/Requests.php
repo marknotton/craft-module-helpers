@@ -103,41 +103,99 @@ class Requests extends Component {
         throw new \Exception('config.json file invalid');
       }
 
-      if ( $configSettings = $config['settings'] ?? false ) {
-        $keys = array_keys($configSettings);
-        if ( in_array('*', $keys)) {
-          if ( in_array($env, $keys)) {
-            $settings = array_merge($configSettings['*'], $configSettings[$env]);
+      // These are the settings that will be taken from the config.json file
+      // and made globablly available in Twig.
+      $get = ['settings', 'paths', 'filenames', 'project'];
+
+      // These objects will not be availabled as their key, as all first level
+      // children will be passed into the root.
+      $dontNest = ['settings', 'paths'];
+
+      foreach ($get as &$setting) {
+
+        $flat = in_array($setting, $dontNest);
+
+        if ( $configSettings = $config[$setting] ?? false ) {
+
+          if (is_string($config[$setting]) || is_int($config[$setting])) {
+
+            $settings[$setting] = $config[$setting];
+
           } else {
-            $settings = $configSettings['*'];
+
+            $keys = array_keys($configSettings);
+
+            if ( in_array('*', $keys)) {
+              if ( in_array($env, $keys)) {
+                if ( $flat ) {
+                  $settings = array_merge($settings, array_merge($configSettings['*'], $configSettings[$env]));
+                } else {
+                  $settings[$setting] = array_merge($configSettings['*'], $configSettings[$env]);
+                }
+              } else {
+                if ( $flat ) {
+                  $settings = array_merge($settings, $configSettings['*']);
+                } else {
+                  $settings[$setting] = $configSettings['*'];
+                }
+              }
+            } else {
+              if ( $flat ) {
+                $settings = array_merge($settings, $configSettings);
+              } else {
+                $settings[$setting] = $configSettings;
+              }
+            }
           }
-        } else {
-          $settings = $configSettings;
         }
-
-      }
-
-      if ( $configFilenames = $config['filenames'] ?? false ) {
-        $keys = array_keys($configFilenames);
-        if ( in_array('*', $keys)) {
-          if ( in_array($env, $keys)) {
-            $settings['filenames'] = array_merge($configFilenames['*'], $configFilenames[$env]);
-          } else {
-            $settings['filenames'] = $configSettings['*'];
-          }
-        } else {
-          $settings['filenames'] = $configFilenames;
-        }
-
-      }
-
-      if ( $configSettings = $config['project'] ?? false ) {
-        $settings['project'] = $configSettings;
       }
 
     } catch (\Exception $e) {
       throw new \yii\base\ErrorException($e->getMessage());
     }
+
+    // echo '<pre>';
+    // var_dump($settings);
+    // echo '</pre>';
+    // die;
+
+    /**
+    * @todo: Convert the following Javascript sample into PHP and mimic the same logic.
+    * @see https://regex101.com/r/6i8mXL/2/
+    * That is to find dynamic variables wrapped in { ... } and replace throughout the config array.
+     */
+
+    // // Add trailing slashes to string in the paths object;
+    // for(let p in config.paths) {
+    //   let value = config.paths[p];
+    //   config.paths[p] = value.length ? value.replace(/\/?$/, '/') : value;
+    // }
+    //
+    // // Convert the paths object to a string
+    // var pathsToString = JSON.stringify(config.paths);
+    //
+    // // Replace any dynamic variables defined in the paths array specifically;
+    // for(let p in Object.assign(config.paths, {"site":config.site})) {
+    //   pathsToString = pathsToString.replace(new RegExp('{'+ p +'}', 'g'), config.paths[p]);
+    // }
+    //
+    // // Convert the paths string back to an object
+    // config.paths = JSON.parse(pathsToString);
+    //
+    // // Covnert the entire config object to a string
+    // var configToString = JSON.stringify(config);
+    //
+    // // Replace any dynamic variables defined in the config files.
+    // for(let p in config.paths) {
+    //   configToString = configToString.replace(new RegExp('{'+ p +'}', 'g'), config.paths[p]);
+    // }
+    //
+    // // Remove any double slashes
+    // configToString = configToString.replace(new RegExp('([^:])(\/\/+)', 'g'), '$1/');
+    //
+    // // Convert the config string back to a string
+    // config = JSON.parse(configToString);
+
 
     Helpers::$config = $settings;
 
