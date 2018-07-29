@@ -103,41 +103,80 @@ class Requests extends Component {
         throw new \Exception('config.json file invalid');
       }
 
-      if ( $configSettings = $config['settings'] ?? false ) {
-        $keys = array_keys($configSettings);
-        if ( in_array('*', $keys)) {
-          if ( in_array($env, $keys)) {
-            $settings = array_merge($configSettings['*'], $configSettings[$env]);
+      // These are the settings that will be taken from the config.json file
+      // and made globablly available in Twig.
+      $get = ['settings', 'paths', 'filenames', 'project', 'themes'];
+
+      // These objects will not be available by their key, as all first level
+      // children will be passed into the root.
+      $dontNest = ['settings', 'paths'];
+
+      foreach ($get as &$setting) {
+
+        $flat = in_array($setting, $dontNest);
+
+        if ( $configSettings = $config[$setting] ?? false ) {
+
+
+          if (is_string($config[$setting]) || is_int($config[$setting])) {
+
+            $settings[$setting] = $config[$setting];
+
           } else {
-            $settings = $configSettings['*'];
+            $keys = array_keys($configSettings);
+
+            if ( in_array('*', $keys)) {
+
+              // Add trailing slashs to paths settings only.
+              if ( $setting == 'paths' ) {
+                foreach ($configSettings as $key => $paths) {
+                  $configSettings[$key] = array_map(function($val) { return $val != "" ? rtrim($val, '/') . '/' : ""; }, $paths);
+                }
+              }
+
+              if ( in_array($env, $keys)) {
+                if ( $flat ) {
+                  $settings = array_merge($settings, array_merge($configSettings['*'], $configSettings[$env]));
+                } else {
+                  $settings[$setting] = array_merge($configSettings['*'], $configSettings[$env]);
+                }
+              } else {
+                if ( $flat ) {
+                  $settings = array_merge($settings, $configSettings['*']);
+                } else {
+                  $settings[$setting] = $configSettings['*'];
+                }
+              }
+            } else {
+
+              // Add trailing slashs to paths settings only.
+              if ( $setting == 'paths' ) {
+                  $configSettings = array_map(function($val) { return $val != "" ? rtrim($val, '/') . '/' : ""; }, $configSettings);
+              }
+
+              if ( $flat ) {
+                $settings = array_merge($settings, $configSettings);
+              } else {
+                $settings[$setting] = $configSettings;
+              }
+            }
           }
-        } else {
-          $settings = $configSettings;
         }
-
-      }
-
-      if ( $configFilenames = $config['filenames'] ?? false ) {
-        $keys = array_keys($configFilenames);
-        if ( in_array('*', $keys)) {
-          if ( in_array($env, $keys)) {
-            $settings['filenames'] = array_merge($configFilenames['*'], $configFilenames[$env]);
-          } else {
-            $settings['filenames'] = $configSettings['*'];
-          }
-        } else {
-          $settings['filenames'] = $configFilenames;
-        }
-
-      }
-
-      if ( $configSettings = $config['project'] ?? false ) {
-        $settings['project'] = $configSettings;
       }
 
     } catch (\Exception $e) {
       throw new \yii\base\ErrorException($e->getMessage());
     }
+
+    $settingsToString = json_encode($settings);
+
+    foreach ($settings as $key => $value) {
+      if ( is_string($settings[$key])) {
+        $settingsToString = preg_replace("/\{".$key."\}/", $settings[$key], $settingsToString);
+      }
+    }
+
+    $settings = json_decode($settingsToString, true);
 
     Helpers::$config = $settings;
 
