@@ -105,9 +105,9 @@ class Requests extends Component {
 
       // These are the settings that will be taken from the config.json file
       // and made globablly available in Twig.
-      $get = ['settings', 'paths', 'filenames', 'project'];
+      $get = ['settings', 'paths', 'filenames', 'project', 'themes'];
 
-      // These objects will not be availabled as their key, as all first level
+      // These objects will not be available by their key, as all first level
       // children will be passed into the root.
       $dontNest = ['settings', 'paths'];
 
@@ -117,15 +117,23 @@ class Requests extends Component {
 
         if ( $configSettings = $config[$setting] ?? false ) {
 
+
           if (is_string($config[$setting]) || is_int($config[$setting])) {
 
             $settings[$setting] = $config[$setting];
 
           } else {
-
             $keys = array_keys($configSettings);
 
             if ( in_array('*', $keys)) {
+
+              // Add trailing slashs to paths settings only.
+              if ( $setting == 'paths' ) {
+                foreach ($configSettings as $key => $paths) {
+                  $configSettings[$key] = array_map(function($val) { return $val != "" ? rtrim($val, '/') . '/' : ""; }, $paths);
+                }
+              }
+
               if ( in_array($env, $keys)) {
                 if ( $flat ) {
                   $settings = array_merge($settings, array_merge($configSettings['*'], $configSettings[$env]));
@@ -140,6 +148,12 @@ class Requests extends Component {
                 }
               }
             } else {
+
+              // Add trailing slashs to paths settings only.
+              if ( $setting == 'paths' ) {
+                  $configSettings = array_map(function($val) { return $val != "" ? rtrim($val, '/') . '/' : ""; }, $configSettings);
+              }
+
               if ( $flat ) {
                 $settings = array_merge($settings, $configSettings);
               } else {
@@ -154,48 +168,15 @@ class Requests extends Component {
       throw new \yii\base\ErrorException($e->getMessage());
     }
 
-    // echo '<pre>';
-    // var_dump($settings);
-    // echo '</pre>';
-    // die;
+    $settingsToString = json_encode($settings);
 
-    /**
-    * @todo: Convert the following Javascript sample into PHP and mimic the same logic.
-    * @see https://regex101.com/r/6i8mXL/2/
-    * That is to find dynamic variables wrapped in { ... } and replace throughout the config array.
-     */
+    foreach ($settings as $key => $value) {
+      if ( is_string($settings[$key])) {
+        $settingsToString = preg_replace("/\{".$key."\}/", $settings[$key], $settingsToString);
+      }
+    }
 
-    // // Add trailing slashes to string in the paths object;
-    // for(let p in config.paths) {
-    //   let value = config.paths[p];
-    //   config.paths[p] = value.length ? value.replace(/\/?$/, '/') : value;
-    // }
-    //
-    // // Convert the paths object to a string
-    // var pathsToString = JSON.stringify(config.paths);
-    //
-    // // Replace any dynamic variables defined in the paths array specifically;
-    // for(let p in Object.assign(config.paths, {"site":config.site})) {
-    //   pathsToString = pathsToString.replace(new RegExp('{'+ p +'}', 'g'), config.paths[p]);
-    // }
-    //
-    // // Convert the paths string back to an object
-    // config.paths = JSON.parse(pathsToString);
-    //
-    // // Covnert the entire config object to a string
-    // var configToString = JSON.stringify(config);
-    //
-    // // Replace any dynamic variables defined in the config files.
-    // for(let p in config.paths) {
-    //   configToString = configToString.replace(new RegExp('{'+ p +'}', 'g'), config.paths[p]);
-    // }
-    //
-    // // Remove any double slashes
-    // configToString = configToString.replace(new RegExp('([^:])(\/\/+)', 'g'), '$1/');
-    //
-    // // Convert the config string back to a string
-    // config = JSON.parse(configToString);
-
+    $settings = json_decode($settingsToString, true);
 
     Helpers::$config = $settings;
 
