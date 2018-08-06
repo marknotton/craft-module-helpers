@@ -47,23 +47,37 @@ const debounce = (fn, time = 10) => {
 ////////////////////////////////////////////////////////////////////////////////
 // Dimensions
 ////////////////////////////////////////////////////////////////////////////////
+// These add 'width' and 'height' getters to the window and document objects respectively
 
-const windowWidth = () => window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+Object.defineProperty(window, 'width', {
+  get : () => { return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth }
+})
 
-const windowHeight = () => window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+Object.defineProperty(window, 'height', {
+  get : () => { return window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight }
+})
 
-const documentWidth = (body = document.body, html = document.documentElement) => {
-  return Math.max( body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth );
-}
+Object.defineProperty(document, 'width', {
+  get : (body = document.body, html = document.documentElement) => {
+    return Math.max( body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth );
+  }
+})
 
-const documentHeight = (body = document.body, html = document.documentElement) => {
-  return Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight );
-}
+Object.defineProperty(document, 'height', {
+  get : (body = document.body, html = document.documentElement) => {
+    return Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight );
+  }
+})
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scrollbar
 ////////////////////////////////////////////////////////////////////////////////
 
-const scrollbarWidth = () => window.innerWidth - document.documentElement.clientWidth;
-
-const scrollbarPosition = () => Math.round(((window.scrollY / (documentHeight() - document.body.clientHeight)) * 100) * 100) / 100;
+const scrollbar = {
+  get width() {
+    return window.innerWidth - document.documentElement.clientWidth;
+  },
+  get position() {
+    return Math.round(((window.scrollY / (document.height - document.body.clientHeight)) * 100) * 100) / 100;
+  }
+}
