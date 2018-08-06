@@ -301,7 +301,15 @@ class Requests extends Component {
       $scriptsToLoad = json_decode(Helpers::$app->versioning->getVersionedNames($scripts));
     } else {
       foreach ($scripts as &$script) {
-        $scriptsToLoad[] = $dir . $script . $devmode;
+        if (filter_var($script, FILTER_VALIDATE_URL)) {
+          if ($this->devmode()) {
+            $scriptsToLoad[] = Helpers::$app->service->params($script, ['v'=>rand()]);
+          } else {
+            $scriptsToLoad[] = $script;
+          }
+        } else {
+          $scriptsToLoad[] = $dir . $script . $devmode;
+        }
       }
       if ( $minified ) {
         $scriptsToLoad = array_map(function($val) { return str_replace('.js', '.min.js', $val); }, $scriptsToLoad);
