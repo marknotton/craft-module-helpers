@@ -97,7 +97,7 @@ class Requests extends Component {
     $env = $env ?? getenv('ENVIRONMENT');
 
     try {
-      $config = json_decode(file_get_contents(Craft::getAlias('@root').'/config.json'), true);
+      $config = json_decode(file_get_contents(Craft::getAlias('@root').'/config.lock'), true);
 
       if ( is_null($config)) {
         throw new \Exception('config.json file invalid');
@@ -117,7 +117,6 @@ class Requests extends Component {
 
         if ( $configSettings = $config[$setting] ?? false ) {
 
-
           if (is_string($config[$setting]) || is_int($config[$setting])) {
 
             $settings[$setting] = $config[$setting];
@@ -125,40 +124,10 @@ class Requests extends Component {
           } else {
             $keys = array_keys($configSettings);
 
-            if ( in_array('*', $keys)) {
-
-              // Add trailing slashs to paths settings only.
-              if ( $setting == 'paths' ) {
-                foreach ($configSettings as $key => $paths) {
-                  $configSettings[$key] = array_map(function($val) { return $val != "" ? rtrim($val, '/') . '/' : ""; }, $paths);
-                }
-              }
-
-              if ( in_array($env, $keys)) {
-                if ( $flat ) {
-                  $settings = array_merge($settings, array_merge($configSettings['*'], $configSettings[$env]));
-                } else {
-                  $settings[$setting] = array_merge($configSettings['*'], $configSettings[$env]);
-                }
-              } else {
-                if ( $flat ) {
-                  $settings = array_merge($settings, $configSettings['*']);
-                } else {
-                  $settings[$setting] = $configSettings['*'];
-                }
-              }
+            if ( $flat ) {
+              $settings = array_merge($settings, $configSettings);
             } else {
-
-              // Add trailing slashs to paths settings only.
-              if ( $setting == 'paths' ) {
-                  $configSettings = array_map(function($val) { return $val != "" ? rtrim($val, '/') . '/' : ""; }, $configSettings);
-              }
-
-              if ( $flat ) {
-                $settings = array_merge($settings, $configSettings);
-              } else {
-                $settings[$setting] = $configSettings;
-              }
+              $settings[$setting] = $configSettings;
             }
           }
         }
@@ -167,16 +136,6 @@ class Requests extends Component {
     } catch (\Exception $e) {
       throw new \yii\base\ErrorException($e->getMessage());
     }
-
-    $settingsToString = json_encode($settings);
-
-    foreach ($settings as $key => $value) {
-      if ( is_string($settings[$key])) {
-        $settingsToString = preg_replace("/\{".$key."\}/", $settings[$key], $settingsToString);
-      }
-    }
-
-    $settings = json_decode($settingsToString, true);
 
     Helpers::$config = $settings;
 
@@ -342,7 +301,15 @@ class Requests extends Component {
       $scriptsToLoad = json_decode(Helpers::$app->versioning->getVersionedNames($scripts));
     } else {
       foreach ($scripts as &$script) {
-        $scriptsToLoad[] = $dir . $script . $devmode;
+        if (filter_var($script, FILTER_VALIDATE_URL)) {
+          if ($this->devmode()) {
+            $scriptsToLoad[] = Helpers::$app->service->params($script, ['v'=>rand()]);
+          } else {
+            $scriptsToLoad[] = $script;
+          }
+        } else {
+          $scriptsToLoad[] = $dir . $script . $devmode;
+        }
       }
       if ( $minified ) {
         $scriptsToLoad = array_map(function($val) { return str_replace('.js', '.min.js', $val); }, $scriptsToLoad);
