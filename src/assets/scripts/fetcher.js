@@ -75,9 +75,9 @@ class TemplateFetcher {
           mode: 'cors',
           method: 'POST',
           headers: new Headers({
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-Requested-With': 'fetch',
+            'Content-Type'     : 'application/json',
+            'Accept'           : 'application/json',
+            'X-Requested-With' : 'fetch',
             [$this.settings.csrf.name]: $this.settings.csrf.token
           }),
           body: JSON.stringify(args),
