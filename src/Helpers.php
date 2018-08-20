@@ -20,6 +20,7 @@ use modules\helpers\twigextensions\Transform;
 use modules\helpers\twigextensions\Tokens;
 use modules\helpers\twigextensions\Wrapper;
 use modules\helpers\twigextensions\Globals;
+
 use Craft;
 use craft\i18n\PhpMessageSource;
 
@@ -62,11 +63,11 @@ class Helpers extends Module {
     $i18n = Craft::$app->getI18n();
     if (!isset($i18n->translations[$id]) && !isset($i18n->translations[$id.'*'])) {
       $i18n->translations[$id] = [
-        'class' => PhpMessageSource::class,
-        'sourceLanguage' => 'en-US',
-        'basePath' => '@modules/helpers/translations',
+        'class'            => PhpMessageSource::class,
+        'sourceLanguage'   => 'en-US',
+        'basePath'         => '@modules/helpers/translations',
         'forceTranslation' => true,
-        'allowOverrides' => true,
+        'allowOverrides'   => true,
       ];
     }
     // Base template directory
@@ -108,13 +109,48 @@ class Helpers extends Module {
       }
     );
 
-    Event::on(
-      Fields::class,
-      Fields::EVENT_REGISTER_FIELD_TYPES,
-      function (RegisterComponentTypesEvent $event) {
-        $event->types[] = Video::class;
+    // Only register fields that have been defined in the config/settings.php file
+    // $allFields = ['video'];
+    // if ( $fields = self::$settings['cms']['fields'] ?? false ) {
+    //   if ( $fields === false || !empty($fields) && !empty(array_intersect($allFields, $fields))) {
+    //     Event::on(
+    //       Fields::class,
+    //       Fields::EVENT_REGISTER_FIELD_TYPES,
+    //       function (RegisterComponentTypesEvent $event) {
+    //         $event->types[] = Video::class;
+    //       }
+    //     );
+    //   }
+    // }
+
+    // Check if there are any fields settings in config/settings.php
+    if ( $fields = self::$settings['cms']['fields'] ?? true ) {
+      // If it doesn't exist, or does exist and is not an empty array...
+      if ( $fields === true || !empty($fields) ) {
+        // If $fields is any array, uppercase the first of each string in the array.
+        $fields = is_array($fields) ? array_map('ucfirst', $fields) : $fields;
+        // Then find all fields files
+        Event::on(
+          Fields::class,
+          Fields::EVENT_REGISTER_FIELD_TYPES,
+          function (RegisterComponentTypesEvent $event) {
+            foreach (glob(__DIR__.'/fields/*.php') as $file) {
+              // If fields don't exist, install all fields.
+              // Otherwise, only install defined fields.
+              // FIXME: Losing variable scrope: 
+              // if ( $fields === true || in_array(basename($file, '.php'), $fields) ) {
+                // Get the Class path and check it exists
+                $class = '\\modules\\helpers\\fields\\'.basename($file, '.php');
+                if (class_exists($class)) {
+                  // Finally, register the Twig extension.
+                  $event->types[] = $class;
+                }
+              // }
+            }
+          }
+        );
       }
-    );
+    }
 
     // Event::on(SystemMessages::class, SystemMessages::EVENT_REGISTER_MESSAGES, function(RegisterEmailMessagesEvent $event) {
     //   $event->messages[] = [
@@ -132,14 +168,34 @@ class Helpers extends Module {
       ]);
     }
 
-    $view->registerTwigExtension(new Filters($view,   Helpers::$twig));
-    $view->registerTwigExtension(new Svg($view,       Helpers::$twig));
-    $view->registerTwigExtension(new Wrapper($view,   Helpers::$twig));
-    $view->registerTwigExtension(new Snip($view,      Helpers::$twig));
-    $view->registerTwigExtension(new Tokens($view,    Helpers::$twig));
-    $view->registerTwigExtension(new Transform($view, Helpers::$twig));
-    $view->registerTwigExtension(new Checks($view,    Helpers::$twig));
-    $view->registerTwigExtension(new Globals($view,   Helpers::$twig));
+    // Check if there are any extension settings in config/settings.php
+    if ( $extensions = self::$settings['cms']['extensions'] ?? true ) {
+      // If it doesn't exist, or does exist and is not an empty array...
+      if ( $extensions === true || !empty($extensions) ) {
+        // If $extensions is any array, uppercase the first of each string in the array.
+        $extensions = is_array($extensions) ? array_map('ucfirst', $extensions) : $extensions;
+        // Then find all twig extension files
+        foreach (glob(__DIR__.'/twigextensions/*.php') as $file) {
+          // If extensions don't exist, install all extensions.
+          // Otherwise, only install defined extensions.
+          if ( $extensions === true || in_array(basename($file, '.php'), $extensions) ) {
+            // Get the Class path and check it exists
+            $class = '\\modules\\helpers\\twigextensions\\'.basename($file, '.php');
+            if (class_exists($class)) {
+              // Finally, register the Twig extension.
+              $view->registerTwigExtension(new $class($view, Helpers::$twig));
+            }
+          }
+        }
+      }
+    }
+
+    // Same idea as above, just a little more hard-coded. Keeping this here incase the above causes any issues.
+    // $allTwigExtension = ['Filters','Svg','Wrapper','Snip','Tokens','Transform','Checks','Globals'];
+    // foreach ($allTwigExtension as $extension) {
+    //   $extension = '\\modules\\helpers\\twigextensions\\'.$extension;
+    //   $view->registerTwigExtension(new $extension($view, Helpers::$twig));
+    // }
 
 
     // Run these within the CMS backend. Not the frontend.
