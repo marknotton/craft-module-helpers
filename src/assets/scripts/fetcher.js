@@ -5,7 +5,7 @@ class TemplateFetcher {
     // Default settings
     this.settings = {
       action: '/fetch-template',
-      fetch: true,
+      fetch: 'fetch' in window,
       csrf: {
         name: window.csrfTokenName !== undefined ? window.csrfTokenName : 'X-CSRF-Token',
         token: window.csrfTokenValue !== undefined ? window.csrfTokenValue : null
