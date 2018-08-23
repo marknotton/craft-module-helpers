@@ -8,7 +8,6 @@
 
 class Fixers {
   constructor () {
-
     let $this = this;
 
     let fixes = [];

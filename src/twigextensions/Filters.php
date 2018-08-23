@@ -16,13 +16,23 @@ class Filters extends \Twig_Extension {
       new \Twig_SimpleFilter('type', [$this, 'getType']),
       new \Twig_SimpleFilter('ucfirst', [$this, 'uppercaseFirstWord']),
       new \Twig_SimpleFilter('count', [$this, 'count'], ['is_safe' => ['html']]),
-      new \Twig_SimpleFilter('cleanup', [$this, 'cleanup'], ['is_safe' => ['html']] )
+      new \Twig_SimpleFilter('cleanup', [$this, 'cleanup'], ['is_safe' => ['html']] ),
+      new \Twig_SimpleFilter('dump', [$this, 'dump'])
     ];
   }
 
 
   public function jsonDecode($data) {
     return json_decode($data);
+  }
+
+  public function dump($data, $die = false) {
+    echo '<pre>';
+    var_dump($data);
+    echo '</pre>';
+    if ( $die ) {
+      die;
+    }
   }
 
   public function unique($array)  {
