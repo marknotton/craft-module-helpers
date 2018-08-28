@@ -136,6 +136,9 @@ class Svg extends Extension {
           }
         }
 
+        $element->setAttribute('role', 'img');
+        $element->setAttribute('data-icon', $filename);
+
         // Defined XML and remove XML Tag
         $svg = $dom->saveXML();
 
@@ -188,7 +191,7 @@ class Svg extends Extension {
        $id = ' id="'.($id === true ? $symbol : $id).'"';
     }
 
-    $symbol = '<svg'.$classes.$id.'><use xlink:href="#'.$symbol.'"></use></svg>';
+    $symbol = '<svg'.$classes.$id.' role="img" data-icon="'.str_replace($prefix, '', $symbol).'"><use xlink:href="#'.$symbol.'"></use></svg>';
 
     return Template::raw($symbol);
   }
