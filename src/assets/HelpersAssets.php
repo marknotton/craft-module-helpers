@@ -18,7 +18,7 @@ class HelpersAssets extends AssetBundle {
 
     $this->css = [];
 
-    $this->js = ['scripts/helpers.js'];
+    $this->js = [];
 
     if (Helpers::$settings['cms']['themed'] ?? false) {
       array_push($this->css, 'css/themer.css');
