@@ -46,6 +46,7 @@ class Helpers extends Module {
   public static $settings;
   public static $config;
   public static $general;
+  public static $console;
   public static $database;
   public static $element;
 
@@ -64,7 +65,7 @@ class Helpers extends Module {
     if (!isset($i18n->translations[$id]) && !isset($i18n->translations[$id.'*'])) {
       $i18n->translations[$id] = [
         'class'            => PhpMessageSource::class,
-        'sourceLanguage'   => 'en-US',
+        'sourceLanguage'   => 'en',
         'basePath'         => '@modules/helpers/translations',
         'forceTranslation' => true,
         'allowOverrides'   => true,
@@ -76,6 +77,8 @@ class Helpers extends Module {
         $e->roots[$this->id] = $baseDir;
       }
     });
+
+    self::$console = Craft::$app->getRequest()->getIsConsoleRequest();
 
     static::setInstance($this);
 
@@ -90,143 +93,125 @@ class Helpers extends Module {
 
     parent::init();
 
-    $view = Craft::$app->view;
-    self::$app      = $this;
-    self::$twig     = $view->getTwig();
-    self::$general  = Craft::$app->getConfig()->getGeneral();
-    self::$config   = Helpers::$app->request->getConfig();
-    self::$settings = Helpers::$app->request->getSettings();
-    self::$element  = Helpers::$app->request->getCurrentElement();
-    self::$database = Helpers::$app->query->isDatabaseConnected();
+    if ( !self::$console ) {
 
-    Event::on(
-      CraftVariable::class,
-      CraftVariable::EVENT_INIT,
-      function (Event $event) {
-        /** @var CraftVariable $variable */
-        $variable = $event->sender;
-        $variable->set('helpers', Variables::class);
-      }
-    );
+      $view = Craft::$app->view;
+      self::$app      = $this;
+      self::$twig     = $view->getTwig();
+      self::$general  = Craft::$app->getConfig()->getGeneral();
+      self::$config   = Helpers::$app->request->getConfig();
+      self::$settings = Helpers::$app->request->getSettings();
+      self::$element  = Helpers::$app->request->getCurrentElement();
+      self::$database = Helpers::$app->query->isDatabaseConnected();
 
-    // Only register fields that have been defined in the config/settings.php file
-    // $allFields = ['video'];
-    // if ( $fields = self::$settings['cms']['fields'] ?? false ) {
-    //   if ( $fields === false || !empty($fields) && !empty(array_intersect($allFields, $fields))) {
-    //     Event::on(
-    //       Fields::class,
-    //       Fields::EVENT_REGISTER_FIELD_TYPES,
-    //       function (RegisterComponentTypesEvent $event) {
-    //         $event->types[] = Video::class;
-    //       }
-    //     );
-    //   }
-    // }
-
-    // Check if there are any fields settings in config/settings.php
-    if ( $fields = self::$settings['cms']['fields'] ?? true ) {
-      // If it doesn't exist, or does exist and is not an empty array...
-      if ( $fields === true || !empty($fields) ) {
-        // If $fields is any array, uppercase the first of each string in the array.
-        $fields = is_array($fields) ? array_map('ucfirst', $fields) : $fields;
-        // Then find all fields files
-        Event::on(
-          Fields::class,
-          Fields::EVENT_REGISTER_FIELD_TYPES,
-          function (RegisterComponentTypesEvent $event) {
-            foreach (glob(__DIR__.'/fields/*.php') as $file) {
-              // If fields don't exist, install all fields.
-              // Otherwise, only install defined fields.
-              // FIXME: Losing variable scrope: 
-              // if ( $fields === true || in_array(basename($file, '.php'), $fields) ) {
-                // Get the Class path and check it exists
-                $class = '\\modules\\helpers\\fields\\'.basename($file, '.php');
-                if (class_exists($class)) {
-                  // Finally, register the Twig extension.
-                  $event->types[] = $class;
-                }
-              // }
-            }
-          }
-        );
-      }
-    }
-
-    // Event::on(SystemMessages::class, SystemMessages::EVENT_REGISTER_MESSAGES, function(RegisterEmailMessagesEvent $event) {
-    //   $event->messages[] = [
-    //     'key'     => 'my_message_key',
-    //     'heading' => Craft::t('core-module', 'Email Heading'),
-    //     'subject' => Craft::t('core-module', 'Email Subject'),
-    //     'body'    => Craft::t('core-module', 'The plain text email body...'),
-    //   ];
-    // });
-
-    // Add versioning class if versioning is enabled in the config.json
-    if ( self::$config['versioning'] ?? false ) {
-      self::$app->setComponents([
-        'versioning' => \modules\helpers\services\Versioning::class
-      ]);
-    }
-
-    // Check if there are any extension settings in config/settings.php
-    if ( $extensions = self::$settings['cms']['extensions'] ?? true ) {
-      // If it doesn't exist, or does exist and is not an empty array...
-      if ( $extensions === true || !empty($extensions) ) {
-        // If $extensions is any array, uppercase the first of each string in the array.
-        $extensions = is_array($extensions) ? array_map('ucfirst', $extensions) : $extensions;
-        // Then find all twig extension files
-        foreach (glob(__DIR__.'/twigextensions/*.php') as $file) {
-          // If extensions don't exist, install all extensions.
-          // Otherwise, only install defined extensions.
-          if ( $extensions === true || in_array(basename($file, '.php'), $extensions) ) {
-            // Get the Class path and check it exists
-            $class = '\\modules\\helpers\\twigextensions\\'.basename($file, '.php');
-            if (class_exists($class)) {
-              // Finally, register the Twig extension.
-              $view->registerTwigExtension(new $class($view, Helpers::$twig));
-            }
-          }
-        }
-      }
-    }
-
-    // Same idea as above, just a little more hard-coded. Keeping this here incase the above causes any issues.
-    // $allTwigExtension = ['Filters','Svg','Wrapper','Snip','Tokens','Transform','Checks','Globals'];
-    // foreach ($allTwigExtension as $extension) {
-    //   $extension = '\\modules\\helpers\\twigextensions\\'.$extension;
-    //   $view->registerTwigExtension(new $extension($view, Helpers::$twig));
-    // }
-
-
-    // Run these within the CMS backend. Not the frontend.
-    if (Craft::$app->getRequest()->getIsCpRequest()) {
       Event::on(
-        View::class,
-        View::EVENT_BEFORE_RENDER_TEMPLATE,
-        function (TemplateEvent $event) {
-          try {
-            Craft::$app->getView()->registerAssetBundle(HelpersAssets::class);
-          } catch (InvalidConfigException $e) {
-            Craft::error(
-              'Error registering AssetBundle - '.$e->getMessage(),
-              __METHOD__
-            );
-          }
+        CraftVariable::class,
+        CraftVariable::EVENT_INIT,
+        function (Event $event) {
+          /** @var CraftVariable $variable */
+          $variable = $event->sender;
+          $variable->set('helpers', Variables::class);
         }
       );
 
-      Helpers::$app->service->themer();
+      // Check if there are any fields settings in config/settings.php
+      if ( $fields = self::$settings['cms']['fields'] ?? true ) {
+        // If it doesn't exist, or does exist and is not an empty array...
+        if ( $fields === true || !empty($fields) ) {
+          // If $fields is any array, uppercase the first of each string in the array.
+          $fields = is_array($fields) ? array_map('ucfirst', $fields) : $fields;
+          // Then find all fields files
+          Event::on(
+            Fields::class,
+            Fields::EVENT_REGISTER_FIELD_TYPES,
+            function (RegisterComponentTypesEvent $event) {
+              foreach (glob(__DIR__.'/fields/*.php') as $file) {
+                // If fields don't exist, install all fields.
+                // Otherwise, only install defined fields.
+                // FIXME: Losing variable scrope:
+                // if ( $fields === true || in_array(basename($file, '.php'), $fields) ) {
+                  // Get the Class path and check it exists
+                  $class = '\\modules\\helpers\\fields\\'.basename($file, '.php');
+                  if (class_exists($class)) {
+                    // Finally, register the Twig extension.
+                    $event->types[] = $class;
+                  }
+                // }
+              }
+            }
+          );
+        }
+      }
 
-      Helpers::$app->service->installation();
+      // Event::on(SystemMessages::class, SystemMessages::EVENT_REGISTER_MESSAGES, function(RegisterEmailMessagesEvent $event) {
+      //   $event->messages[] = [
+      //     'key'     => 'my_message_key',
+      //     'heading' => Craft::t('core-module', 'Email Heading'),
+      //     'subject' => Craft::t('core-module', 'Email Subject'),
+      //     'body'    => Craft::t('core-module', 'The plain text email body...'),
+      //   ];
+      // });
 
-    } else {
-      // Run these only in the frontend
+      // Add versioning class if versioning is enabled in the config.json
+      if ( self::$config['versioning'] ?? false ) {
+        self::$app->setComponents([
+          'versioning' => \modules\helpers\services\Versioning::class
+        ]);
+      }
 
-      // In instances where the directory structure matches the uri to a disabled page in the CMS,
-      // non-admins should be reirected to a 404. Otherwise disabled pages would be accessible.
-      $element = Helpers::$app->request->getCurrentElement() ?? false;
-      if ( !empty($element) && $element->status == 'disabled' && !Helpers::$app->request->admin() ) {
-        throw new NotFoundHttpException('You do not have access to this page. It may be disabled in the CMS.');
+      // Check if there are any extension settings in config/settings.php
+      if ( $extensions = self::$settings['cms']['extensions'] ?? true ) {
+        // If it doesn't exist, or does exist and is not an empty array...
+        if ( $extensions === true || !empty($extensions) ) {
+          // If $extensions is any array, uppercase the first of each string in the array.
+          $extensions = is_array($extensions) ? array_map('ucfirst', $extensions) : $extensions;
+          // Then find all twig extension files
+          foreach (glob(__DIR__.'/twigextensions/*.php') as $file) {
+            // If extensions don't exist, install all extensions.
+            // Otherwise, only install defined extensions.
+            if ( $extensions === true || in_array(basename($file, '.php'), $extensions) ) {
+              // Get the Class path and check it exists
+              $class = '\\modules\\helpers\\twigextensions\\'.basename($file, '.php');
+              if (class_exists($class)) {
+                // Finally, register the Twig extension.
+                $view->registerTwigExtension(new $class($view, Helpers::$twig));
+              }
+            }
+          }
+        }
+      }
+
+      // Run these within the CMS backend. Not the frontend.
+      if (Craft::$app->getRequest()->getIsCpRequest()) {
+        Event::on(
+          View::class,
+          View::EVENT_BEFORE_RENDER_TEMPLATE,
+          function (TemplateEvent $event) {
+            try {
+              Craft::$app->getView()->registerAssetBundle(HelpersAssets::class);
+            } catch (InvalidConfigException $e) {
+              Craft::error(
+                'Error registering AssetBundle - '.$e->getMessage(),
+                __METHOD__
+              );
+            }
+          }
+        );
+
+        Helpers::$app->service->themer();
+
+        Helpers::$app->service->installation();
+
+      } else {
+        // Run these only in the frontend
+
+        // In instances where the directory structure matches the uri to a disabled page in the CMS,
+        // non-admins should be reirected to a 404. Otherwise disabled pages would be accessible.
+        $element = Helpers::$app->request->getCurrentElement() ?? false;
+        if ( !empty($element) && $element->status == 'disabled' && !Helpers::$app->request->admin() ) {
+          throw new NotFoundHttpException('You do not have access to this page. It may be disabled in the CMS.');
+        }
+
       }
 
     }
