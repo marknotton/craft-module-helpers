@@ -94,6 +94,7 @@ class Svg extends Extension {
         $svg = $images . '/' . $svg;
       };
 
+
       $svg = file_get_contents($svg);
 
     }

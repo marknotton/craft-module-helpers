@@ -27,7 +27,7 @@ const dom = {
   get status() {
     return loaded;
   }
-}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Debounce
@@ -42,7 +42,7 @@ const debounce = (fn, time = 10) => {
     clearTimeout(timeout);
     timeout = setTimeout(functionCall, time);
   }
-}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Dimensions
@@ -51,23 +51,23 @@ const debounce = (fn, time = 10) => {
 
 Object.defineProperty(window, 'width', {
   get : () => { return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth }
-})
+});
 
 Object.defineProperty(window, 'height', {
   get : () => { return window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight }
-})
+});
 
 Object.defineProperty(document, 'width', {
   get : (body = document.body, html = document.documentElement) => {
     return Math.max( body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth );
   }
-})
+});
 
 Object.defineProperty(document, 'height', {
   get : (body = document.body, html = document.documentElement) => {
     return Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight );
   }
-})
+});
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scrollbar
@@ -100,4 +100,4 @@ const scrollbar = {
 
     return results;
   }
-}
+};

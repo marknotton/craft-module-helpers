@@ -63,5 +63,3 @@ class Accordion {
 if ( typeof pluginify !== 'undefined') {
   pluginify('accordion', Accordion, false);
 }
-
-const accordion = $('.accordion').accordion();
