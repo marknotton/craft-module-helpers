@@ -36,6 +36,7 @@
   #global-sidebar > a:hover, #global-sidebar *:not(.has-subnav) > a:hover { background-color:var(--secondary, #da5a47) }
   #main-container #alerts { background: var(--secondary, #da5a47); }
   #notifications .notification.error { background: var(--secondary, #da5a47); }
+  #install-modal #dots > div.sel { background-color: var(--secondary, #da5a47); border-color: var(--secondary, #da5a47); }
 
   /* Green */
   .success { color: var(--secondary, #00b007) !important; }
