@@ -172,7 +172,7 @@ class Services extends Component {
   public function themer() {
     // Add a CSS custom variable if theme colour is found in the config/settings.php
     if ( Helpers::$settings['cms']['themed'] ?? false ) {
-      if ($themes = Helpers::$settings['themes'] ?? false) {
+      if ($themes = Helpers::$settings['cms']['theme'] ?? Helpers::$settings['themes'] ?? false) {
         $themes = is_array($themes) ? array_values($themes) : [$themes];
         Craft::$app->getView()->registerCss('html { --primary:'.($themes[0]).'; --secondary:'.($themes[1] ?? $themes[0]).' }');
       } elseif ($theme = Helpers::$settings['theme'] ?? false) {
