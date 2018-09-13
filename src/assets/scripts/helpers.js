@@ -70,6 +70,38 @@ Object.defineProperty(document, 'height', {
 });
 
 ////////////////////////////////////////////////////////////////////////////////
+// Disable Console Logging on Production Environments for non-admins.
+////////////////////////////////////////////////////////////////////////////////
+
+if ( document.body.classList.contains('production-environment') && !document.body.classList.contains('admin') ) {
+
+  window['_logger'] = { status : true, old : null };
+
+  Object.defineProperty(window, 'logger', {
+    get : () => {
+      return window._logger.status;
+    },
+    set : (value = true) => {
+      if ( typeof value == 'boolean') {
+        window._logger.status = value;
+        if (value) {
+          // Enable Logger
+          if(window._logger.old == null) { return; }
+          window['console']['log'] = window._logger.old;
+        } else {
+          // Disable Logger
+          window._logger.old = console.log;
+          window['console']['log'] = function() {};
+        }
+      } else {
+        console.log('Must be bool');
+      }
+    }
+  });
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Scrollbar
 ////////////////////////////////////////////////////////////////////////////////
 

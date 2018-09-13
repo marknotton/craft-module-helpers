@@ -60,13 +60,14 @@ class Queries extends Component {
 
     if ( Helpers::$database ) {
 
-      $sql = "SELECT handle, enabled FROM ".getenv('DB_TABLE_PREFIX')."plugins" ;
+      $sql = "SELECT handle FROM ".getenv('DB_TABLE_PREFIX')."plugins" ;
 
       $command = Craft::$app->db->createCommand($sql);
       $results = $command->queryAll();
+
       if ($results) {
         foreach ($results as $value) {
-          $newResults[$value['handle'].'Enabled'] = boolval($value['enabled']);
+          $newResults[$value['handle'].'Enabled'] = true;
         }
       }
     }

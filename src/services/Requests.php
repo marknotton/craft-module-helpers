@@ -403,6 +403,13 @@ class Requests extends Component {
       }
     }
 
+    $user = Craft::$app->getUser()->getIdentity() ?? null;
+
+    if (!empty($user)) {
+      if ( $user->admin ) {
+        $classes[] = 'admin';
+      }
+    }
 
     if (empty($element)) {
       $element = Helpers::$app->request->getCurrentElement() ?? null;
@@ -417,7 +424,7 @@ class Requests extends Component {
       $query = [
         'element' => ['id', 'parent', 'child', 'type'],
         'section' => ['type', 'handle'],
-        'group' => ['type', 'handle'],
+        'group' => ['type', 'handle']
       ];
 
       // If the parent or child is set, also include the levels
