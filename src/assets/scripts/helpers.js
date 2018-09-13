@@ -93,9 +93,7 @@ if ( document.body.classList.contains('production-environment') && !document.bod
           window._logger.old = console.log;
           window['console']['log'] = function() {};
         }
-      } else {
-        console.log('Must be bool');
-      }
+      } 
     }
   });
 

@@ -428,9 +428,11 @@ class Requests extends Component {
       ];
 
       // If the parent or child is set, also include the levels
-      // if (!empty($element['parent']) || !empty($element['child'])) {
-      //   $elementInfo[] = 'level';
-      // }
+      if (!empty($element['parent']) || !empty($element['children'])) {
+        if ( $element->level ?? false ) {
+          $classes[] = 'level-'.$element->level;
+        }
+      }
 
       // Get Entry Information
       foreach ($query['element'] as &$value) {
@@ -446,11 +448,11 @@ class Requests extends Component {
       // Get Section Information
       if (!empty($element['section'])) {
         foreach ($query['section'] as &$value) {
-          if (isset($element[$value])) {
-            if (is_numeric($element[$value])) {
-              $classes[] = strtolower($value.'-'.$element[$value]);
+          if (isset($element->section[$value])) {
+            if (is_numeric($element->section[$value])) {
+              $classes[] = strtolower($value.'-'.$element->section[$value]);
             } else {
-              $classes[] = StringHelper::toKebabCase($element[$value]);
+              $classes[] = StringHelper::toKebabCase($element->section[$value]);
             }
           }
         }
