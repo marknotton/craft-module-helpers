@@ -3,13 +3,14 @@ class TemplateFetcher {
   constructor (...args) {
     // Default settings
     this.settings = {
-      url   : '/fetch-template',
-      fetch : 'fetch' in window,
-      csrf  : {
+      url      : '/fetch-template',
+      fetch    : 'fetch' in window,
+      dataType : 'json',
+      csrf     : {
         name  : window.csrfTokenName !== undefined ? window.csrfTokenName : 'X-CSRF-Token',
         token : window.csrfTokenValue !== undefined ? window.csrfTokenValue : null
       },
-      dev: false // Shows console logs
+      dev: true // Shows console logs
     }
 
     // Manage settings
@@ -59,7 +60,7 @@ class TemplateFetcher {
       ajaxMethod ($this, data, callback) {
         $.ajax({
           type     : 'POST',
-          dataType : 'json',
+          dataType : $this.settings.dataType,
           url      : $this.settings.url,
           data     : data,
           headers  : {
@@ -97,7 +98,7 @@ class TemplateFetcher {
           credentials: 'same-origin',
         })
         .then(response => {
-          return response.json().then(data => {
+          return response[$this.settings.dataType]().then(data => {
             if (response.ok && !data.error) {
               if ($this.settings.dev) {
                 console.log('Success:', data)
@@ -129,8 +130,9 @@ class TemplateFetcher {
     }
   }
 
-  get (url, data, callback) {
+  get (url, dataType = 'json', data, callback) {
     this.settings.url = url;
+    this.settings.dataType = dataType;
     this.template(data, callback);
   }
 };
