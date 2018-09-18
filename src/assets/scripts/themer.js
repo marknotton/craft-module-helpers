@@ -7,3 +7,10 @@ if (typeof site !== 'undefined') {
   $('#system-name h2').text(site.name);
 
 }
+
+
+var shareButton = $('.btn.sharebtn');
+
+if ( shareButton.length ) {
+  shareButton.text('View Entry');
+}
