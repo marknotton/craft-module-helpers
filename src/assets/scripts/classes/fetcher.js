@@ -10,7 +10,7 @@ class TemplateFetcher {
         name  : window.csrfTokenName !== undefined ? window.csrfTokenName : 'X-CSRF-Token',
         token : window.csrfTokenValue !== undefined ? window.csrfTokenValue : null
       },
-      dev: true // Shows console logs
+      dev: false // Shows console logs
     }
 
     // Manage settings
