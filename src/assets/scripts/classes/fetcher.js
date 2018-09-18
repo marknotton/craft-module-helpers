@@ -1,36 +1,41 @@
 class TemplateFetcher {
-  constructor (...args) {
-    const $this = this
 
+  constructor (...args) {
     // Default settings
     this.settings = {
-      action: '/fetch-template',
-      fetch: 'fetch' in window,
-      csrf: {
-        name: window.csrfTokenName !== undefined ? window.csrfTokenName : 'X-CSRF-Token',
-        token: window.csrfTokenValue !== undefined ? window.csrfTokenValue : null
+      url   : '/fetch-template',
+      fetch : 'fetch' in window,
+      csrf  : {
+        name  : window.csrfTokenName !== undefined ? window.csrfTokenName : 'X-CSRF-Token',
+        token : window.csrfTokenValue !== undefined ? window.csrfTokenValue : null
       },
       dev: false // Shows console logs
     }
 
     // Manage settings
     if (args.length) {
-      args.forEach(function (setting) {
+      args.forEach((setting) => {
         switch (typeof (setting)) {
           case 'boolean':
-            $this.settings.fetch = setting
+            this.settings.fetch = setting
             break
           case 'string':
-            $this.settings.action = setting
+            this.settings.url = setting
             break
           case 'object':
-            // $this.settings = Object.assign({}, $this.settings, setting)
+            // this.settings = Object.assign({}, this.settings, setting)
             for (var attrname in setting) {
-              $this.settings[attrname] = setting[attrname];
+              this.settings[attrname] = setting[attrname];
             }
             break
         }
       })
+    }
+
+    // Add an abort constroller for manual fetch cancellations
+    if (this.settings.fetch) {
+      this.controller = new AbortController();
+      this.signal = this.controller.signal;
     }
 
     if (this.settings.dev) {
@@ -38,18 +43,26 @@ class TemplateFetcher {
     }
   }
 
+  abort() {
+    if (this.settings.fetch) {
+      this.controller.abort();
+      if (this.settings.dev) {
+        console.log('Fetch aborted');
+      }
+    }
+  }
+
   get fetcher () {
     return {
 
-      // Menu button event handler
-      ajaxMethod ($this, args, callback) {
-        // AJAX (ES5 + jQuery)
+      // AJAX (ES5 + jQuery)
+      ajaxMethod ($this, data, callback) {
         $.ajax({
-          type : 'POST',
-          dataType: 'json',
-          url: $this.settings.action,
-          data: args,
-          headers: {
+          type     : 'POST',
+          dataType : 'json',
+          url      : $this.settings.url,
+          data     : data,
+          headers  : {
             [$this.settings.csrf.name]: $this.settings.csrf.token
           },
           success (data) {
@@ -70,18 +83,18 @@ class TemplateFetcher {
       },
 
       // Fetch (ES6)
-      fetchMethod ($this, args, callback) {
-        window.fetch($this.settings.action, {
-          mode: 'cors',
-          method: 'POST',
-          headers: new Headers({
+      fetchMethod ($this, data, callback) {
+        fetch($this.settings.url, {
+          mode    : 'cors',
+          method  : 'POST',
+          headers : new Headers({
             'Content-Type'     : 'application/json',
             'Accept'           : 'application/json',
             'X-Requested-With' : 'fetch',
             [$this.settings.csrf.name]: $this.settings.csrf.token
           }),
-          body: JSON.stringify(args),
-          credentials: 'same-origin'
+          body: JSON.stringify(data),
+          credentials: 'same-origin',
         })
         .then(response => {
           return response.json().then(data => {
@@ -89,7 +102,7 @@ class TemplateFetcher {
               if ($this.settings.dev) {
                 console.log('Success:', data)
               }
-              callback(data)
+              if (callback ) { callback(data); }
               return data
             } else {
               return Promise.reject({status: response.status, data})
@@ -97,20 +110,27 @@ class TemplateFetcher {
           })
         })
         .catch(error => {
-          callback(error.data)
-          console.error('Error:', error.data.message)
+          if ( error ) {
+            if (callback ) { callback(error.data); }
+            console.error('Error:', error.data.message)
+          } else {
+            console.error('Unknown error')
+          }
         })
       }
     }
   }
 
-  template (args, callback) {
-    if (args !== undefined && callback !== undefined) {
-      if (this.settings.fetch) {
-        this.fetcher.fetchMethod(this, args, callback)
-      } else {
-        this.fetcher.ajaxMethod(this, args, callback)
-      }
+  template (data, callback) {
+    if (this.settings.fetch) {
+      this.fetcher.fetchMethod(this, data, callback)
+    } else {
+      this.fetcher.ajaxMethod(this, data, callback)
     }
   }
-}
+
+  get (url, data, callback) {
+    this.settings.url = url;
+    this.template(data, callback);
+  }
+};
