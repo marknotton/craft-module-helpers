@@ -8,7 +8,6 @@ if (typeof site !== 'undefined') {
 
 }
 
-
 var shareButton = $('.btn.sharebtn');
 
 if ( shareButton.length ) {
