@@ -105,7 +105,7 @@ class Requests extends Component {
 
       // These are the settings that will be taken from the config.json file
       // and made globablly available in Twig.
-      $get = ['settings', 'paths', 'filenames', 'project', 'themes'];
+      $get = ['settings', 'paths', 'filenames', 'project', 'themes', 'organisation'];
 
       // These objects will not be available by their key, as all first level
       // children will be passed into the root.
