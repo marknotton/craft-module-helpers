@@ -10,6 +10,7 @@ class Filters extends \Twig_Extension {
   public function getFilters() {
     return [
       new \Twig_SimpleFilter('criteria', [$this, 'criteriaFilter']),
+      new \Twig_SimpleFilter('arrayColumn', [$this, 'column']),
       new \Twig_SimpleFilter('getAttributes', [$this, 'getAttributes']),
       new \Twig_SimpleFilter('unique', [$this, 'unique']),
       new \Twig_SimpleFilter('json_decode', [$this, 'jsonDecode']),
@@ -21,6 +22,10 @@ class Filters extends \Twig_Extension {
     ];
   }
 
+  /** @see: http://php.net/manual/en/function.array-column.php */
+  public function arrayColumn(array $array, $criteria) {
+    return array_column($array, $criteria);
+  }
 
   public function jsonDecode($data) {
     return json_decode($data);
