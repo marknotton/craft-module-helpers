@@ -51,25 +51,32 @@ class TemplateMakerController extends Controller {
         $response['success'] = true;
         $response['message'] = 'Entry Type for '.$entryType->title.' found';
 
+        $sectionData = Helpers::$app->query->sectionRouteRules();
+        $fieldsData  = Helpers::$app->query->fields();
+
+        $section = $sectionData[array_search($entryType->sectionId, array_column($sectionData, 'id'))];
+
+        $fields = [];
         $currentLayout = $entryType->getFieldLayout();
         $currentTabs = $currentLayout->getTabs();
 
-        $postedFieldLayout = [];
-
         foreach ($currentTabs as $tab) {
-          $fields = $tab->getFields();
-          foreach ($fields as $field) {
-            $postedFieldLayout[$tab->name][] = [
+          $tabFields = $tab->getFields();
+          foreach ($tabFields as $field) {
+            $fields[$tab->name][] = [
               'name'   => $field->name   ?? false,
               'handle' => $field->handle ?? false,
               'id'     => $field->id     ?? false,
-              'type'   => $field->type   ?? false,
-              'field'  => $field
+              'type' => $fieldsData[array_search($field->id, array_column($fieldsData, 'id'))]['type'] ?? false
+              // 'type' => explode('\\', $fieldsData[array_search($field->id, array_column($fieldsData, 'id'))]['type'])
             ];
           }
         }
 
-        $response['fields'] = $postedFieldLayout;
+        $this->createTemplates($fields, $section);
+
+        $response['fields'] = $fields;
+        $response['section'] = $section;
 
       } catch(\Exception $e) {
 
@@ -82,6 +89,10 @@ class TemplateMakerController extends Controller {
 
     return $this->asJson($response);
 
+  }
+
+  private function createTemplates($fields, $section) {
+    
   }
 
 }

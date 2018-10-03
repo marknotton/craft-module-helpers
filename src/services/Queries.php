@@ -75,6 +75,31 @@ class Queries extends Component {
     return $newResults;
   }
 
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Fields
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Get all the section routes rules
+   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
+   * @return array
+   */
+  public function fields() {
+
+    extract($this->routeOptions(func_get_args()));
+
+    $sql = "SELECT id, name, handle, type FROM ".$this->prefix."fields ";
+    $sql .= "ORDER by id" ;
+
+    $command = Craft::$app->db->createCommand($sql);
+    $results = $command->queryAll();
+
+    return $results;
+
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Routes
   //////////////////////////////////////////////////////////////////////////////
