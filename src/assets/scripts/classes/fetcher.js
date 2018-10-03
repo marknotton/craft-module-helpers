@@ -19,16 +19,16 @@ class TemplateFetcher {
         switch (typeof (setting)) {
           case 'boolean':
             this.settings.fetch = setting
-            break
+          break
           case 'string':
             this.settings.url = setting
-            break
+          break
           case 'object':
             // this.settings = Object.assign({}, this.settings, setting)
             for (var attrname in setting) {
               this.settings[attrname] = setting[attrname];
             }
-            break
+          break
         }
       })
     }

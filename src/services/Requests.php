@@ -57,12 +57,17 @@ class Requests extends Component {
    */
   public function getSettings($includeConfigJson = true) {
     // Make all keys/values in the config/settings.php available in Twig
-    $settings = Craft::$app->getConfig()->getConfigFromFile('settings');
+    $settings = Craft::$app->getConfig()->getConfigFromFile('settings') ?? false;
+    $helpers  = Craft::$app->getConfig()->getConfigFromFile('helpers') ?? false;
 
     // If theme isn't defined, but a themes array is.
     // Use the first themes elements and set them as a theme.
     if ( !isset($settings['theme']) && isset($settings['themes']) && is_array($settings['themes']) ) {
       $settings['theme'] = array_values($settings['themes'])[0];
+    }
+
+    if ( $helpers ) {
+      $settings = array_merge($helpers, $settings);
     }
 
     if ( $includeConfigJson ) {
@@ -405,10 +410,8 @@ class Requests extends Component {
 
     $user = Craft::$app->getUser()->getIdentity() ?? null;
 
-    if (!empty($user)) {
-      if ( $user->admin ) {
-        $classes[] = 'admin';
-      }
+    if (!empty($user) && $user->admin) {
+      $classes[] = 'admin';
     }
 
     if (empty($element)) {

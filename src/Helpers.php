@@ -225,6 +225,18 @@ class Helpers extends Module {
       }
     );
 
+    // Register site routes
+    if (getenv('ENVIRONMENT') == 'dev') {
+      Event::on(
+        UrlManager::class,
+        UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+        // UrlManager::EVENT_REGISTER_CP_URL_RULES,
+        function (RegisterUrlRulesEvent $event) {
+          $event->rules['template-maker'] = 'helpers/template-maker/default';
+        }
+      );
+    }
+
     Craft::info(
       Craft::t(
         'helpers',
