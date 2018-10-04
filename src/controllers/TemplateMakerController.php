@@ -69,7 +69,6 @@ class TemplateMakerController extends Controller {
               'handle' => $field->handle ?? false,
               'id'     => $field->id     ?? false,
               'type'   => $fieldsData[array_search($field->id, array_column($fieldsData, 'id'))]['type'] ?? false
-              // 'type' => explode('\\', $fieldsData[array_search($field->id, array_column($fieldsData, 'id'))]['type'])
             ];
           }
         }
@@ -114,24 +113,11 @@ class TemplateMakerController extends Controller {
     // Special Rules
     // TODO: Create specials rules to generate an include for speicficl field handles
     // and also redirect specific field types to a different sample file.
-    $sampleAliases = [
-      'supercool\tablemaker\fields\TableMakerField' => [
-        'alias' => 'TableMaker'
-      ],
-      'craft\redactor\Field' => [
-        'alias' => 'Redactor'
-      ],
-      'modules\helpers\fields\Video' => [
-        'alias' => 'Video'
-      ]
-    ];
-
-    $fieldIncludes = [
-      'featuredImage' => [
-        'include' => '_componenets/featured-image',
-        'only' => false,
-        'with' => []
-      ]
+    $fieldAliases = [
+      'supercool\tablemaker\fields\TableMakerField' => 'TableMaker',
+      'craft\redactor\Field' => 'Redactor',
+      'featuredImage' => 'FeaturedImage',
+      'body' => 'Body'
     ];
 
     // Loop through all tabs.
@@ -148,11 +134,10 @@ class TemplateMakerController extends Controller {
         // to ensure valid custom element markup.
         // TODO: Above comment
 
-        // Add the correct amount of devider characters for consistency.
-        $deviders = str_repeat('=', 80 - (strlen($tab) + 13));
-
         // Comment line for the tab name.
-        $layout .= "\n\t{# ".$tab." Tab ".$deviders." #}\n";
+        $layout .= "\n\t{# ".str_repeat('=', 72)." #}\n";
+        $layout .= "\t{# ".$tab." Tab ".str_repeat(' ', 80 - (strlen($tab) + 13))." #}\n";
+        $layout .= "\t{# ".str_repeat('=', 72)." #}\n";
 
         // Tab open element.
         $layout .= "\n\t<".$element.">\n";
@@ -184,6 +169,7 @@ class TemplateMakerController extends Controller {
             // Replace any instances of the string 'fieldHandle', and replace it
             // with the relivant fieldHandle.
             $fieldContent = str_replace('fieldHandle', $field['handle'], $fieldContent);
+            $fieldContent = str_replace('fieldName', $field['name'], $fieldContent);
 
             // Add modified contents to layout.
             $layout .= "\n\t\t".$fieldContent;
