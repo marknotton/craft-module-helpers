@@ -237,6 +237,21 @@ class Helpers extends Module {
       );
     }
 
+    // $aliases = [
+    //   'root'              => Craft::getAlias('@root'),
+    //   'lib'               => Craft::getAlias('@lib'),
+    //   'craft'             => Craft::getAlias('@craft'),
+    //   'config'            => Craft::getAlias('@config'),
+    //   'contentMigrations' => Craft::getAlias('@contentMigrations'),
+    //   'storage'           => Craft::getAlias('@storage'),
+    //   'templates'         => Craft::getAlias('@templates'),
+    //   'translations'      => Craft::getAlias('@translations')
+    // ];
+    //
+    // echo '<pre>';
+    // var_dump($aliases);
+    // echo '</pre>'; die;
+
     Craft::info(
       Craft::t(
         'helpers',

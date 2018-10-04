@@ -198,8 +198,8 @@ class Services extends Component {
       $sizes = ['B','KB','MB','GB','TB','PB'];
       $key=0;
       while($size > 1024) {
-          $size /= 1024;
-          $key++;
+        $size /= 1024;
+        $key++;
       }
       return number_format($size,2).$sizes[$key];
   }
