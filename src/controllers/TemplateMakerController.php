@@ -111,6 +111,29 @@ class TemplateMakerController extends Controller {
     // Elements Tags that are valid markup and don't need to be validated.
     $elementExceptions = ['main', 'nav', 'aside', 'header', 'footer', 'article', 'section'];
 
+    // Special Rules
+    // TODO: Create specials rules to generate an include for speicficl field handles
+    // and also redirect specific field types to a different sample file.
+    $sampleAliases = [
+      'supercool\tablemaker\fields\TableMakerField' => [
+        'alias' => 'TableMaker'
+      ],
+      'craft\redactor\Field' => [
+        'alias' => 'Redactor'
+      ],
+      'modules\helpers\fields\Video' => [
+        'alias' => 'Video'
+      ]
+    ];
+
+    $fieldIncludes = [
+      'featuredImage' => [
+        'include' => '_componenets/featured-image',
+        'only' => false,
+        'with' => []
+      ]
+    ];
+
     // Loop through all tabs.
     foreach ($tabs as $tab => $fields) {
 
@@ -154,6 +177,9 @@ class TemplateMakerController extends Controller {
 
             // Get sample file contents.
             $fieldContent = file_get_contents($sampleFile);
+
+            // TODO: Add tabs on each line:
+            // SEE: https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php
 
             // Replace any instances of the string 'fieldHandle', and replace it
             // with the relivant fieldHandle.

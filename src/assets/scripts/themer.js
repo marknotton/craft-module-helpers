@@ -13,5 +13,5 @@ if (typeof site !== 'undefined') {
 var shareButton = $('.btn.sharebtn');
 
 if ( shareButton.length ) {
-  shareButton.text('View Entry');
+  shareButton.text('View Page');
 }
