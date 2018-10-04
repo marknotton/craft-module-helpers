@@ -110,6 +110,9 @@ class TemplateMakerController extends Controller {
     // Elements Tags that are valid markup and don't need to be validated.
     $elementExceptions = ['main', 'nav', 'aside', 'header', 'footer', 'article', 'section'];
 
+    // Matching tabs names should be rendered in these block types of they exist.
+    $blocks = ['navigation', 'header', 'main', 'content', 'aside', 'footer'];
+
     // Special Rules
     // TODO: Create specials rules to generate an include for speicficl field handles
     // and also redirect specific field types to a different sample file.
