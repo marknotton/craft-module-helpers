@@ -1,5 +1,9 @@
 # Helpers Changelog
 
+## 1.0.3 - 2018-10-09
+### Loackdown
+- Stable version as-per the time of completing Thinking Matters website.
+
 ## 1.0.2 - 2018-06-21
 ### Added
 - Tons up updates, tweaks, methods, classes, fixes, etc... I will maintain the Changelog from now on.
