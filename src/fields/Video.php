@@ -34,7 +34,6 @@ class Video extends Field {
   // Everything else will be managed automatically
   //////////////////////////////////////////////////////////////////////////////
 
-  public $formatsdfssdfsdf = "SDFSDFl";
   public $formats = [
     'youtube' => [
       'name' => 'YouTube',

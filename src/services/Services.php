@@ -12,6 +12,7 @@ use craft\web\View;
 use craft\base\Component;
 use craft\helpers\StringHelper;
 use craft\helpers\Template;
+use craft\elements\Entry;
 
 class Services extends Component {
 
@@ -322,4 +323,21 @@ class Services extends Component {
 
     return $url;
   }
+
+  public function templateMaker($app) {
+
+    if (getenv('ENVIRONMENT') == 'dev' && Helpers::$app->request->admin() && (Helpers::$settings['cms']['template-maker'] ?? false)) {
+      $segments = Craft::$app->getRequest()->getSegments();
+      $id = end($segments);
+
+      if ( !empty($id) && is_numeric($id) && in_array("entrytypes", $segments)) {
+        $entryType = Entry::find()->typeId($id)->all()[0];
+        $template = $app->renderTemplate("helpers/_components/template-maker/input", ['id' => $id, 'entryType' => $entryType]);
+        $js = "var templateMakerForm = '".str_replace(array("\n", "\r"), '', $template)."';";
+        Craft::$app->getView()->registerJs($js, View::POS_HEAD);
+
+      }
+    }
+  }
+
 }

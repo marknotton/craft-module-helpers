@@ -2,13 +2,17 @@
 // Template Maker
 ////////////////////////////////////////////////////////////////////////////////
 
-if ($('#crumbs nav li a[href$=entrytypes]').length && 'fetch' in window) {
+// && typeof initFLD !== 'undefined'
 
-  $('header#header input.btn.submit').before(
-    "<button class='btn create-template'>Generate Template File</button>"
-  );
+if ( typeof templateMakerForm !== 'undefined' ) {
 
-  $('button.create-template').on('click', function(event) {
+  // Append form to page
+  $('form#main-form').after(templateMakerForm);
+
+  // Move filename input to aesthetically better position
+  $('#filename-field').appendTo("#location-field > .input");
+
+  $('form#template-maker').on('submit', function(event) {
     event.preventDefault();
 
     var entryTypeID = parseInt(window.location.pathname.split("/").pop(), 10);
@@ -31,8 +35,10 @@ if ($('#crumbs nav li a[href$=entrytypes]').length && 'fetch' in window) {
           response.json().then(function(data) {
             if (response.ok && !data.error) {
               console.log(data);
+              setNotice('Template Created');
               return data
             } else {
+              setError('Failed to created Template');
               return Promise.reject({status: response.status, data})
             }
           });
@@ -53,4 +59,5 @@ if ($('#crumbs nav li a[href$=entrytypes]').length && 'fetch' in window) {
     }
 
   });
+
 }

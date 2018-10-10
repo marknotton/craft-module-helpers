@@ -20,7 +20,6 @@ use modules\helpers\twigextensions\Transform;
 use modules\helpers\twigextensions\Tokens;
 use modules\helpers\twigextensions\Wrapper;
 use modules\helpers\twigextensions\Globals;
-
 use Craft;
 use craft\i18n\PhpMessageSource;
 
@@ -114,13 +113,34 @@ class Helpers extends Module {
         }
       );
 
-      Event::on(
-        Fields::class,
-        Fields::EVENT_REGISTER_FIELD_TYPES,
-        function (RegisterComponentTypesEvent $event) {
-          $event->types[] = Video::class;
+      // Check if there are any fields settings in config/settings.php
+      if ( $fields = self::$settings['cms']['fields'] ?? true ) {
+        // If it doesn't exist, or does exist and is not an empty array...
+        if ( $fields === true || !empty($fields) ) {
+          // If $fields is any array, uppercase the first of each string in the array.
+          $fields = is_array($fields) ? array_map('ucfirst', $fields) : $fields;
+          // Then find all fields files
+          Event::on(
+            Fields::class,
+            Fields::EVENT_REGISTER_FIELD_TYPES,
+            function (RegisterComponentTypesEvent $event) {
+              foreach (glob(__DIR__.'/fields/*.php') as $file) {
+                // If fields don't exist, install all fields.
+                // Otherwise, only install defined fields.
+                // FIXME: Losing variable scrope:
+                // if ( $fields === true || in_array(basename($file, '.php'), $fields) ) {
+                  // Get the Class path and check it exists
+                  $class = '\\modules\\helpers\\fields\\'.basename($file, '.php');
+                  if (class_exists($class)) {
+                    // Finally, register the Twig extension.
+                    $event->types[] = $class;
+                  }
+                // }
+              }
+            }
+          );
         }
-      );
+      }
 
       // Event::on(SystemMessages::class, SystemMessages::EVENT_REGISTER_MESSAGES, function(RegisterEmailMessagesEvent $event) {
       //   $event->messages[] = [
@@ -177,8 +197,15 @@ class Helpers extends Module {
           }
         );
 
-        Helpers::$app->service->themer();
+        // Add templateMaker class if template-maker is enabled in the config/helpers.php
+        if (getenv('ENVIRONMENT') == 'dev' && Helpers::$app->request->admin() && (self::$settings['cms']['template-maker'] ?? false )) {
+          self::$app->setComponents([
+            'templateMaker' => \modules\helpers\services\TemplateMaker::class
+          ]);
+          Helpers::$app->templateMaker->init();
+        }
 
+        Helpers::$app->service->themer();
         Helpers::$app->service->installation();
 
       } else {
@@ -199,10 +226,29 @@ class Helpers extends Module {
     Event::on(
       UrlManager::class,
       UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+      // UrlManager::EVENT_REGISTER_CP_URL_RULES,
       function (RegisterUrlRulesEvent $event) {
         $event->rules['fetch-template'] = 'helpers/fetch/template';
+        if (getenv('ENVIRONMENT') == 'dev') {
+          $event->rules['template-maker'] = 'helpers/template-maker/default';
+        }
       }
     );
+
+    // $aliases = [
+    //   'root'              => Craft::getAlias('@root'),
+    //   'lib'               => Craft::getAlias('@lib'),
+    //   'craft'             => Craft::getAlias('@craft'),
+    //   'config'            => Craft::getAlias('@config'),
+    //   'contentMigrations' => Craft::getAlias('@contentMigrations'),
+    //   'storage'           => Craft::getAlias('@storage'),
+    //   'templates'         => Craft::getAlias('@templates'),
+    //   'translations'      => Craft::getAlias('@translations')
+    // ];
+    //
+    // echo '<pre>';
+    // var_dump($aliases);
+    // echo '</pre>'; die;
 
     Craft::info(
       Craft::t(

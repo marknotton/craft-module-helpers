@@ -1,0 +1,32 @@
+{% do view.registerAssetBundle("modules\\helpers\\assets\\TemplateMakerAssets") %}
+
+{% import "_includes/forms" as forms %}
+
+<form id="template-maker" action="/template-maker" data-entry-type-id="{{ id }}">
+
+	{{ forms.textField({
+		id: 'location',
+		label: 'Template Maker',
+	  instructions: 'Compile template markup for this entry type using the field data above. The template location is relative to your template directory.',
+		name: 'location',
+		placeholder: 'Location',
+		value: entryType.title ?? ''
+	}) }}
+
+	{{ forms.textField({
+		id: 'filename',
+		name: 'filename',
+		placeholder: 'File name',
+		value: value ?? ''
+	}) }}
+
+	{{ forms.checkbox({
+		id: 'overwrite',
+	  label: 'Overwrite existing template',
+		name: 'overwrite',
+		value: 'false'
+	}) }}
+
+	<button class="btn submit" type="submit">Generate Template File</submit>
+
+<form>

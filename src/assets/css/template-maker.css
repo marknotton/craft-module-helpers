@@ -1,3 +1,27 @@
-button.create-template {
-  margin-right:8px; 
-}
+form#template-maker { background-color:white; border-top:1px solid #E5E5E7; background-clip: padding-box; padding: 24px; }
+
+/* Location Input */
+
+form#template-maker #location-field { margin-bottom:0; }
+
+form#template-maker #location-field > .input { display: flex; align-items: center; }
+
+form#template-maker #location-field > .input #location { max-width:400px; width:100%; }
+
+/* Filename Input */
+
+form#template-maker #filename-field { display: flex; align-items: center; margin-top:0;  }
+
+form#template-maker #filename-field:before, form#template-maker #filename-field:after { color:#8f98a3; font-style: italic; }
+
+form#template-maker #filename-field:before { content:"/"; margin-left:10px; margin-right:10px; }
+
+form#template-maker #filename-field:after { content:".twig"; margin-left:10px; }
+
+/* Overwrite Checkbox */
+
+form#template-maker #overwrite + label { margin-top:10px; }
+
+/* Submit Button */
+
+form#template-maker button[type="submit"] { font-size:14px; margin-top:10px; display:block; }

@@ -29,7 +29,7 @@
   .chars-left.negative-chars-left { color: var(--secondary, #da5a47); }
   .input.errors > .text, .input.errors > .border-box, .input.errors > .passwordwrapper > .text, .text.error { border: 1px solid var(--secondary, #da5a47) !important; }
   ul.errors li { color: var(--secondary, #da5a47); }
-  /* .btn:active, .btn.active {  background-color:var(--secondary, #da5a47) } */
+  .btn:active, .btn.active {  background-color:var(--secondary, #da5a47) }
   .matrixconfigitem .actions .icon.settings.error:before { color: var(--secondary, #da5a47); }
   #global-sidebar > a.active, #global-sidebar > a:active { background:linear-gradient(to top, rgba(0, 0, 0, 0.50), rgba(0, 0, 0, 0.50)) var(--secondary, #da5a47);  }
   #global-sidebar #nav li:not(.has-subnav) > a.sel { border-color: var(--secondary, #da5a47); background:var(--secondary, #da5a47) }

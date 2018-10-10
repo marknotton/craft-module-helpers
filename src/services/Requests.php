@@ -13,7 +13,6 @@ use craft\helpers\StringHelper;
 use craft\web\twig\variables\Rebrand;
 use craft\helpers\Template;
 
-
 class Requests extends Component {
 
   //////////////////////////////////////////////////////////////////////////////

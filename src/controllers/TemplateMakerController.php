@@ -73,11 +73,13 @@ class TemplateMakerController extends Controller {
           }
         }
 
-        $template = $this->createTemplates($tabs, $section);
+        $template = Helpers::$app->templateMaker->createTemplates($tabs, $section);
 
         $response['template'] = $template;
         $response['tabs']     = $tabs;
         $response['section']  = $section;
+
+        // Craft::$app->getSession()->setNotice("Template Created");
 
       } catch(\Exception $e) {
 
@@ -85,111 +87,12 @@ class TemplateMakerController extends Controller {
         unset($response['success']);
         $response['message'] = $e->getMessage();
 
+        // Craft::$app->session->setError("Failed to create template");
+
       }
     }
 
     return $this->asJson($response);
-
-  }
-
-  private function createTemplates($tabs, $section) {
-
-    // Get contents of a generic template.
-    $layout = file_get_contents(Craft::getAlias('@templates').'/_layouts/generic.twig');
-
-    // Define the name of the new template file.
-    $newTemplateFileName = 'file.twig';
-    $newTemplateFilePath = Craft::getAlias('@templates').'/'.$newTemplateFileName;
-
-    // Create a new file.
-    $newTemplate = fopen($newTemplateFilePath, 'w') or die('Cannot open file:  '.$newTemplateFilePath);
-
-    // Exclude these tabs from being generated.
-    $tabExclusions = ['seo'];
-
-    // Elements Tags that are valid markup and don't need to be validated.
-    $elementExceptions = ['main', 'nav', 'aside', 'header', 'footer', 'article', 'section'];
-
-    // Matching tabs names should be rendered in these block types of they exist.
-    $blocks = ['navigation', 'header', 'main', 'content', 'aside', 'footer'];
-
-    // Special Rules
-    // TODO: Create specials rules to generate an include for speicficl field handles
-    // and also redirect specific field types to a different sample file.
-    $fieldAliases = [
-      'supercool\tablemaker\fields\TableMakerField' => 'TableMaker',
-      'craft\redactor\Field' => 'Redactor',
-      'featuredImage' => 'FeaturedImage',
-      'body' => 'Body'
-    ];
-
-    // Loop through all tabs.
-    foreach ($tabs as $tab => $fields) {
-
-      // Kebabify the key name for use as an element tag.
-      $element = StringHelper::toKebabCase($tab);
-
-      // Ignore specific tabs.
-      if ( !in_array($element, $tabExclusions) ) {
-
-        // If the element name happens to be a valid HTML5 tag, leave it as it is.
-        // Otherwise check if at least one hyphen exists. If it doesn't, add one
-        // to ensure valid custom element markup.
-        // TODO: Above comment
-
-        // Comment line for the tab name.
-        $layout .= "\n\t{# ".str_repeat('=', 72)." #}\n";
-        $layout .= "\t{# ".$tab." Tab ".str_repeat(' ', 80 - (strlen($tab) + 13))." #}\n";
-        $layout .= "\t{# ".str_repeat('=', 72)." #}\n";
-
-        // Tab open element.
-        $layout .= "\n\t<".$element.">\n";
-
-        // Loop through all fields for this tab.
-        foreach ($fields as $field) {
-
-          // Turn field type string into array.
-          $sampleFile = explode('\\', $field['type']);
-
-          // Define a sample file path for the field type.
-          $sampleFile = Craft::getAlias('@helpers').'/templates/_samples/'.$sampleFile[count($sampleFile) - 1].'.twig';
-
-          // If the file exists.
-          if (file_exists($sampleFile)) {
-
-            // Add the correct amount of devider characters for consistency.
-            $deviders = str_repeat('-', 80 - (strlen($field['name']) + 11));
-
-            // Comment line for the field name.
-            $layout .= "\n\t\t{# ".$field['name']." ".$deviders." #}\n";
-
-            // Get sample file contents.
-            $fieldContent = file_get_contents($sampleFile);
-
-            // TODO: Add tabs on each line:
-            // SEE: https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php
-
-            // Replace any instances of the string 'fieldHandle', and replace it
-            // with the relivant fieldHandle.
-            $fieldContent = str_replace('fieldHandle', $field['handle'], $fieldContent);
-            $fieldContent = str_replace('fieldName', $field['name'], $fieldContent);
-
-            // Add modified contents to layout.
-            $layout .= "\n\t\t".$fieldContent;
-          }
-
-        }
-
-        // Tab close element.
-        $layout .= "\n\t</".$element.">\n";
-      }
-
-    }
-
-    // Write template file.
-    fwrite($newTemplate, $layout);
-
-    return [ 'filename' => $newTemplateFileName, 'path' => $newTemplateFilePath];
 
   }
 

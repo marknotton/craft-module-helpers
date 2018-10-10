@@ -18,14 +18,9 @@ class HelpersAssets extends AssetBundle {
 
     $this->css = [];
 
-    $this->js = [];
+    $this->js = ['scripts/notifications.js'];
 
     $user = Craft::$app->getUser()->getIdentity() ?? null;
-
-    if (getenv('ENVIRONMENT') == 'dev' && !empty($user) && $user->admin && (Helpers::$settings['cms']['template-maker'] ?? false)) {
-      array_push($this->css, 'css/template-maker.css');
-      array_push($this->js, 'scripts/template-maker.js');
-    }
 
     if (Helpers::$settings['cms']['themed'] ?? false) {
       array_push($this->css, 'css/themer.css');
