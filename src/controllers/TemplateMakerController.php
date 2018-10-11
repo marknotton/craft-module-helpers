@@ -72,8 +72,9 @@ class TemplateMakerController extends Controller {
             ];
           }
         }
-
-        $template = Helpers::$app->templateMaker->createTemplates($tabs, $section);
+        Helpers::$app->templateMaker->create($tabs, $section);
+        // Helpers::$app->templateMaker->init();
+        $template = Helpers::$app->templateMaker->create($tabs, $section);
 
         $response['template'] = $template;
         $response['tabs']     = $tabs;

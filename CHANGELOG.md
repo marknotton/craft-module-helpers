@@ -1,5 +1,9 @@
 # Helpers Changelog
 
+## 1.0.4 - 2018-10-11
+### Added
+- Template Maker tests
+
 ## 1.0.3 - 2018-10-09
 ### Loackdown
 - Stable version as-per the time of completing Thinking Matters website.

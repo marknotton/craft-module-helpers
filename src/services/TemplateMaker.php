@@ -30,8 +30,8 @@ class TemplateMaker extends Component {
     }
   }
 
-  public function createTemplates($tabs, $section) {
-
+  public function create($tabs, $section) {
+    return "SSS";
     // Get contents of a generic template.
     $layout = file_get_contents(Craft::getAlias('@templates').'/_layouts/generic.twig');
 

@@ -2,7 +2,7 @@
     "name": "marknotton/helpers",
     "description": "Craft CMS 3 helpers module",
     "type": "craft-module",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "keywords": [
         "craft",
         "cms",
@@ -22,7 +22,7 @@
     "extra": {
         "name": "Helpers",
         "handle": "helpers",
-        "schemaVersion": "1.0.3",
+        "schemaVersion": "1.0.4",
         "hasCpSettings": false,
         "hasCpSection": false,
         "changelogUrl": "https://github.com/marknotton/craft-module-helpers/blob/master/CHANGELOG.md",
