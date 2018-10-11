@@ -13,32 +13,23 @@ class TemplateMakerController extends Controller {
 
   protected $allowAnonymous = ['template'];
 
-  public function actionDefault() {
-
-    $request = null;
-    if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-      $request = $_SERVER['HTTP_X_REQUESTED_WITH'];
-      switch (strtolower($request)) {
-        case 'xmlhttprequest':
-          $request = "ajax";
-        break;
-        case 'fetch':
-          $request = "fetch";
-        break;
-        default;
-          $request = "standard";
-        break;
-      }
-    }
+  public function actionTemplateExists() {
 
     // Extract all post paramaters as variables
-    $data = $request === 'ajax' ? Craft::$app->getRequest()->getBodyParams() : json_decode(file_get_contents('php://input'));
+    $data = json_decode(file_get_contents('php://input'));
+    extract((array)$data);
+
+  }
+
+  public function actionDefault() {
+
+    // Extract all post paramaters as variables
+    $data = json_decode(file_get_contents('php://input'));
     extract((array)$data);
 
     // Default response
     $response = [
-      'message' => 'Entry Type ID was not defined in your '.($request == 'ajax' ? 'data' : 'body').' param',
-      'request' => $request,
+      'message' => 'Entry Type ID was not defined in your body param',
       'data' => $data
     ];
 
@@ -73,13 +64,11 @@ class TemplateMakerController extends Controller {
           }
         }
         Helpers::$app->templateMaker->create($tabs, $section);
-        // Helpers::$app->templateMaker->init();
         $template = Helpers::$app->templateMaker->create($tabs, $section);
 
         $response['template'] = $template;
         $response['tabs']     = $tabs;
         $response['section']  = $section;
-
         // Craft::$app->getSession()->setNotice("Template Created");
 
       } catch(\Exception $e) {

@@ -1,22 +1,80 @@
-form#template-maker { background-color:white; border-top:1px solid #E5E5E7; background-clip: padding-box; padding: 24px; }
+form#template-maker { position:relative; background-color:white; border-top:1px solid #E5E5E7; background-clip: padding-box; padding: 24px; }
+
+form#template-maker:before {
+  content:"";
+  pointer-events:none;
+  z-index:1;
+  position: absolute;
+  top:0; left:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  color:#00b007;
+  font-size:32px;
+  font-weight:bold;
+  width:100%;
+  height:100%;
+  background-color:white;
+  opacity:0;
+  transition:opacity 0.5s;
+}
+
+form#template-maker.loading.error:before {
+  content:"!";
+  color:#da5a47;
+}
+
+form#template-maker.loading:before {
+  opacity:0.9;
+  pointer-events:auto;
+}
+
+form#template-maker:after {
+  content:"";
+  z-index:1;
+  position:absolute;
+  opacity:0;
+  transition:opacity 0.5s;
+  top:calc(50% - 20px);
+  left:calc(50% - 20px);
+  width:40px; height:40px;
+  border:2px solid transparent;
+  border-top-color:var(--secondary, #da5a47);
+  border-radius:100%;
+}
+
+form#template-maker.loading:after {
+  opacity:1;
+  animation-name: loader-rotation;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes loader-rotation {
+  0% { transform:rotate(0deg);}
+  33% {transform:rotate(480deg);}
+  66% {transform:rotate(960deg);}
+  100% {transform:rotate(1440deg);}
+}
 
 /* Location Input */
 
-form#template-maker #location-field { margin-bottom:0; }
+form#template-maker #path-field { margin-bottom:0; }
 
-form#template-maker #location-field > .input { display: flex; align-items: center; }
+form#template-maker #path-field > .input { display: flex; align-items: center; }
 
-form#template-maker #location-field > .input #location { max-width:400px; width:100%; }
+form#template-maker #path-field > .input #path { max-width:400px; width:100%; }
 
 /* Filename Input */
 
-form#template-maker #filename-field { display: flex; align-items: center; margin-top:0;  }
+form#template-maker #template-field { display: flex; align-items: center; margin-top:0;  }
 
-form#template-maker #filename-field:before, form#template-maker #filename-field:after { color:#8f98a3; font-style: italic; }
+form#template-maker #template-field:before, form#template-maker #template-field:after { color:#8f98a3; font-style: italic; }
 
-form#template-maker #filename-field:before { content:"/"; margin-left:10px; margin-right:10px; }
+form#template-maker #template-field:before { content:"/"; margin-left:10px; margin-right:10px; }
 
-form#template-maker #filename-field:after { content:".twig"; margin-left:10px; }
+form#template-maker #template-field:after { content:".twig"; margin-left:10px; }
 
 /* Overwrite Checkbox */
 

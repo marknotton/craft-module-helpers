@@ -16,22 +16,62 @@ use craft\elements\Entry;
 
 class TemplateMaker extends Component {
 
+  private $sections;
+  private $section;
+
   public function init() {
 
     $segments = Craft::$app->getRequest()->getSegments();
-    $id = end($segments);
 
-    if ( !empty($id) && is_numeric($id) && in_array("entrytypes", $segments)) {
-      $entryType = Entry::find()->typeId($id)->all()[0];
-      $template = Craft::$app->view->renderTemplate("helpers/_components/template-maker/input", ['id' => $id, 'entryType' => $entryType]);
-      $js = "var templateMakerForm = '".str_replace(array("\n", "\r"), '', $template)."';";
-      Craft::$app->getView()->registerJs($js, View::POS_HEAD);
+    if ( in_array("entrytypes", $segments) ) {
 
+      $id = $segments[array_search('entrytypes', $segments) - 1] ?? false;
+      $this->sections = Helpers::$app->query->sectionRouteRules()?? false;
+      $this->section = $this->sections[$id - 1] ?? false;
+      $templateExists = false;
+
+      if (!empty($this->section) && !empty($id) && is_numeric($id) ) {
+
+        $path = $this->getPath();
+        $templateName = $this->getTemplateName();
+        $templateFullPath = Craft::getAlias('@templates').'/'.ltrim($path, '/').'/'.ltrim($templateName, '/').'.twig';
+
+        if ( file_exists($templateFullPath) ) {
+          $templateExists = true;
+          $templateName .= '_'.time();
+        }
+
+        $template = Craft::$app->view->renderTemplate("helpers/_components/template-maker/input", ['id' => $id, 'path' => $path, 'template' => $templateName, 'templateExists' => $templateExists]);
+        $templateMakerForm = "var templateMaker = '".str_replace(array("\n", "\r"), '', $template)."';";
+        Craft::$app->getView()->registerJs($templateMakerForm, View::POS_HEAD);
+      }
     }
   }
 
+  private function getPath() {
+    $path = StringHelper::toKebabCase(trim(preg_replace('/{.*?\}/m', '', $this->section['uriFormat']),'/').'/' ?? '');
+    if ( !in_array($path, ["home", "homepage"]) ) {
+      return $path;
+    }
+  }
+
+  private function getTemplateName() {
+
+    if ( $this->section['template'] == '_loader' || $this->section['template'] == '_loader.twig' ) {
+      if ( $this->section['type'] == 'channel' || $this->section['type'] == 'structure' ) {
+        return '_entry';
+      } else {
+        return 'index';
+      }
+    } else {
+      return preg_replace('/\\.[^.\\s]{3,4}$/', '', $this->section['template']);
+    }
+
+
+  }
+
   public function create($tabs, $section) {
-    return "SSS";
+
     // Get contents of a generic template.
     $layout = file_get_contents(Craft::getAlias('@templates').'/_layouts/generic.twig');
 

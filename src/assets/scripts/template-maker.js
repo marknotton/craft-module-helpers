@@ -4,16 +4,29 @@
 
 // && typeof initFLD !== 'undefined'
 
-if ( typeof templateMakerForm !== 'undefined' ) {
+if ( typeof templateMaker !== 'undefined' && 'fetch' in window) {
 
   // Append form to page
-  $('form#main-form').after(templateMakerForm);
+  $('form#main-form').after(templateMaker);
 
   // Move filename input to aesthetically better position
-  $('#filename-field').appendTo("#location-field > .input");
+  $('#template-field').appendTo("#path-field > .input");
 
-  $('form#template-maker').on('submit', function(event) {
+  var templateMakerForm = $('form#template-maker');
+  var overwriteCheckbox = templateMakerForm.find('#overwrite');
+
+  templateMakerForm.on('submit', function(event) {
+
     event.preventDefault();
+
+    if (overwriteCheckbox.is(":checked")) {
+      if (!confirm("You are about to overwrite an existing file. Are you sure you want to do this? This can't be undone.")) {
+        console.log('Do nothing!');
+        return false;
+      }
+    }
+
+    templateMakerForm.addClass('loading');
 
     var entryTypeID = parseInt(window.location.pathname.split("/").pop(), 10);
 
@@ -36,9 +49,12 @@ if ( typeof templateMakerForm !== 'undefined' ) {
             if (response.ok && !data.error) {
               console.log(data);
               setNotice('Template Created');
+              templateMakerForm.removeClass('loading');
               return data
             } else {
+              templateMakerForm.addClass('error');
               setError('Failed to created Template');
+              setTimeout(function(){ templateMakerForm.removeClass('error loading') }, 1000);
               return Promise.reject({status: response.status, data})
             }
           });
@@ -54,10 +70,16 @@ if ( typeof templateMakerForm !== 'undefined' ) {
 
     } else {
 
+      setError('Entry Type not found');
       console.warn('Entry Type ID was not found in the URL');
 
     }
 
   });
+
+  overwriteCheckbox.on('change', function(event) {
+    event.preventDefault();
+    console.log('TOGGLE');
+  })
 
 }

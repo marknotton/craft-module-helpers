@@ -4,25 +4,31 @@
 
 <form id="template-maker" action="/template-maker" data-entry-type-id="{{ id }}">
 
+	{% if templateExists %}
+		<p>
+			It looks like a template file found here: <em>{{ path }}/{{ template|split('_')|slice(0,-1)|join() }}.twig</em> already exists. A timestamp has been added to the end if the filename as a precaution.
+		</p>
+	{% endif %}
+
 	{{ forms.textField({
-		id: 'location',
+		id: 'path',
 		label: 'Template Maker',
 	  instructions: 'Compile template markup for this entry type using the field data above. The template location is relative to your template directory.',
-		name: 'location',
-		placeholder: 'Location',
-		value: entryType.title ?? ''
+		name: 'path',
+		placeholder: 'File Path',
+		value: path ?? ''
 	}) }}
 
 	{{ forms.textField({
-		id: 'filename',
-		name: 'filename',
-		placeholder: 'File name',
-		value: value ?? ''
+		id: 'template',
+		name: 'template',
+		placeholder: 'Template Name',
+		value: template ?? ''
 	}) }}
 
 	{{ forms.checkbox({
 		id: 'overwrite',
-	  label: 'Overwrite existing template',
+	  label: 'Overwrite template if it exists',
 		name: 'overwrite',
 		value: 'false'
 	}) }}
