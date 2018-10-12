@@ -191,6 +191,7 @@ class Requests extends Component {
    * When check for a files existance, just use this fill. If it doesn't exist, false is return. Otherwise return the url
    * @param  string $file url string
    * @param  string $fallback If the file doesn't exist. The fallback will be returned. Fallback files are not checked for their existence
+   * @example Helpers::$app->request->fileexists(...);
    * @return bool
    */
   public function fileexists(string $file, string $fallback = null) {
@@ -212,6 +213,33 @@ class Requests extends Component {
         return file_exists(getcwd().'/'.$file) ? '/'.ltrim($file, '/') : (!empty($fallback) ? $fallback : false);
       }
     }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // File Directory
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Recursively scan all files and direcotries in a given path. Return all
+   * the folder and file names in a nest array. Whilst excluding a few gremlins.
+   * @param  string $dir directory name/path. Defaults to the templates directory.
+   * @example Helpers::$app->request->getFileDirectory();
+   * @return array
+   */
+  public function getFileDirectory(string $dir = null) {
+    $dir = $dir ?? Craft::getAlias('@templates');
+    $result = array();
+    $cdir = scandir($dir);
+    foreach ($cdir as $key => $value) {
+      if (!in_array($value,array(".","..")) && substr($value, 0, 1) !== '.')  {
+        if (is_dir($dir . DIRECTORY_SEPARATOR . $value)){
+          $result[$value] = $this->getFileDirectory($dir . DIRECTORY_SEPARATOR . $value);
+        } else {
+          $result[] = $value;
+        }
+      }
+    }
+    return $result;
   }
 
   //////////////////////////////////////////////////////////////////////////////

@@ -18,6 +18,7 @@ class TemplateMaker extends Component {
 
   private $sections;
   private $section;
+  private $filetype = 'twig';
 
   public function init() {
 
@@ -34,14 +35,22 @@ class TemplateMaker extends Component {
 
         $path = $this->getPath();
         $templateName = $this->getTemplateName();
-        $templateFullPath = Craft::getAlias('@templates').'/'.ltrim($path, '/').'/'.ltrim($templateName, '/').'.twig';
+        $templateFullPath = Craft::getAlias('@templates').'/'.ltrim($path, '/').'/'.ltrim($templateName, '/').'.'.$this->filetype;
 
         if ( file_exists($templateFullPath) ) {
           $templateExists = true;
           $templateName .= '_'.time();
         }
 
-        $template = Craft::$app->view->renderTemplate("helpers/_components/template-maker/input", ['id' => $id, 'path' => $path, 'template' => $templateName, 'templateExists' => $templateExists]);
+        $settings = [
+          'id' => $id,
+          'path' => $path,
+          'template' => $templateName,
+          'templateExists' => $templateExists,
+          'existingFiles' => Helpers::$app->request->getFileDirectory() ?? []
+        ];
+
+        $template = Craft::$app->view->renderTemplate("helpers/_components/template-maker/input", $settings);
         $templateMakerForm = "var templateMaker = '".str_replace(array("\n", "\r"), '', $template)."';";
         Craft::$app->getView()->registerJs($templateMakerForm, View::POS_HEAD);
       }
@@ -90,7 +99,7 @@ class TemplateMaker extends Component {
     }
 
 
-    $newTemplateFilePath = Craft::getAlias('@templates').'/'.$uri.$newTemplateFileName.'.twig';
+    $newTemplateFilePath = Craft::getAlias('@templates').'/'.$uri.$newTemplateFileName.'.'.$this->filetype;
 
     // Tab indentation count
     $tabIndentationCount = 1;
@@ -147,7 +156,7 @@ class TemplateMaker extends Component {
           $sampleFile = explode('\\', $field['type']);
 
           // Define a sample file path for the field type.
-          $sampleFile = Craft::getAlias('@helpers').'/templates/_samples/'.$sampleFile[count($sampleFile) - 1].'.twig';
+          $sampleFile = Craft::getAlias('@helpers').'/templates/_samples/'.$sampleFile[count($sampleFile) - 1].'.'.$this->filetype;
 
           // If the file exists.
           if (file_exists($sampleFile)) {
@@ -193,7 +202,7 @@ class TemplateMaker extends Component {
     // Write template file.
     fwrite($newTemplate, $layout);
 
-    return [ 'filename' => $newTemplateFileName, 'path' => $newTemplateFilePath.'.twig', 'uri' => $uri];
+    return [ 'filename' => $newTemplateFileName, 'path' => $newTemplateFilePath.'.'.$this->filetype, 'uri' => $uri];
 
   }
 
