@@ -2,13 +2,7 @@
 
 {% import "_includes/forms" as forms %}
 
-<form id="template-maker" action="/template-maker" data-entry-type-id="{{ id }}">
-
-	{% if templateExists %}
-		<p>
-			It looks like a template file found here: <em>{{ path }}/{{ template|split('_')|slice(0,-1)|join() }}.twig</em> already exists. A timestamp has been added to the end if the filename as a precaution.
-		</p>
-	{% endif %}
+<form id="template-maker" action="/template-maker">
 
 	{{ forms.textField({
 		id: 'path',
@@ -26,12 +20,32 @@
 		value: template ?? ''
 	}) }}
 
-	{{ forms.checkbox({
-		id: 'overwrite',
-	  label: 'Overwrite template if it exists',
-		name: 'overwrite',
-		value: 'false'
-	}) }}
+	<warning-message>
+		<p>
+			<i>⚠️</i>It looks like the template file <em></em> already exists.
+		</p>
+
+		{{ forms.checkbox({
+			id: 'overwrite',
+		  label: 'Overwrite template',
+			name: 'overwrite',
+			value: 'false'
+		}) }}
+
+		<overwite-enabled>
+			A file by this name already exists. If you continue, the original file will be overwritten. This can not be undone.
+		</overwite-enabled>
+		<overwite-disabled>
+			A timestamp will be suffixed at the end of the filename to avoid loss of data.
+		</overwite-disabled>
+	</warning-message>
+
+	{% js at head %}
+		var sectionId = "{{ id }}";
+		var defaultTemplate = "{{ template }}";
+		var timestamp = "{{ timestamp }}";
+		var existingFiles = JSON.parse('{{ existingFiles|raw }}');
+	{% endjs %}
 
 	<button class="btn submit" type="submit">Generate Template File</submit>
 

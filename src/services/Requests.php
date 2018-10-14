@@ -10,6 +10,14 @@ use modules\helpers\Helpers;
 use Craft;
 use craft\base\Component;
 use craft\helpers\StringHelper;
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Filesystem\Filesystem;
+use yii\base\ErrorException;
+use yii\base\Exception;
+use yii\base\InvalidArgumentException;
 use craft\web\twig\variables\Rebrand;
 use craft\helpers\Template;
 
@@ -223,22 +231,38 @@ class Requests extends Component {
    * Recursively scan all files and direcotries in a given path. Return all
    * the folder and file names in a nest array. Whilst excluding a few gremlins.
    * @param  string $dir directory name/path. Defaults to the templates directory.
+   * @param  bool $nested `true` : nest file structure into arrays.
+   *                      `false` : list all paths as array of strings [default]
    * @example Helpers::$app->request->getFileDirectory();
    * @return array
    */
-  public function getFileDirectory(string $dir = null) {
+  public function getFileDirectory(string $dir = null, $nested = false) {
     $dir = $dir ?? Craft::getAlias('@templates');
-    $result = array();
-    $cdir = scandir($dir);
-    foreach ($cdir as $key => $value) {
-      if (!in_array($value,array(".","..")) && substr($value, 0, 1) !== '.')  {
-        if (is_dir($dir . DIRECTORY_SEPARATOR . $value)){
-          $result[$value] = $this->getFileDirectory($dir . DIRECTORY_SEPARATOR . $value);
-        } else {
-          $result[] = $value;
+    $result = [];
+
+    if ($nested) {
+      $cdir = scandir($dir);
+      foreach ($cdir as $key => $value) {
+        if (!in_array($value,array(".","..")) && substr($value, 0, 1) !== '.')  {
+          if (is_dir($dir . DIRECTORY_SEPARATOR . $value)){
+            $result[$value] = $this->getFileDirectory($dir . DIRECTORY_SEPARATOR . $value, $nested);
+          } else {
+            $result[] = $value;
+          }
         }
       }
+    } else {
+
+      $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST);
+
+      foreach ($iterator as $file) {
+        if ($file->isDir() || substr($file->getFilename(), 0, 1) === '.' ){ continue; }
+        $result[] = ltrim(str_replace($dir, '', $file->getPathname()), '/');
+      }
     }
+
     return $result;
   }
 

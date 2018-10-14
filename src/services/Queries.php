@@ -223,6 +223,20 @@ class Queries extends Component {
     $command = Craft::$app->db->createCommand($sql);
     $results = $command->queryAll();
 
+    // TODO: Get entry type data via mySQL command, not this faff...
+    // $allSections = Craft::$app->getSections()->getAllSections();
+    foreach ($results as $key => $section) {
+      $entrytypes = Craft::$app->getSections()->getSectionById($section['id'])->getEntryTypes();
+      foreach ($entrytypes as &$entrytype) {
+        $results[$key]['entrytypes'][] = [
+          'id'     => $entrytype->id,
+          'name'   => $entrytype->name,
+          'handle' => $entrytype->handle,
+          'title'  => $entrytype->hasTitleField ? $entrytype->titleLabel : false
+        ];
+      }
+    };
+
     return $results;
 
   }

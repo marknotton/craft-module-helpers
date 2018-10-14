@@ -69,6 +69,7 @@ class TemplateMakerController extends Controller {
         $response['template'] = $template;
         $response['tabs']     = $tabs;
         $response['section']  = $section;
+        $response['filename']  = $filename;
         // Craft::$app->getSession()->setNotice("Template Created");
 
       } catch(\Exception $e) {

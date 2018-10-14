@@ -25,6 +25,7 @@ form#template-maker.loading.error:before {
   color:#da5a47;
 }
 
+
 form#template-maker.loading:before {
   opacity:0.9;
   pointer-events:auto;
@@ -70,15 +71,44 @@ form#template-maker #path-field > .input #path { max-width:400px; width:100%; }
 
 form#template-maker #template-field { display: flex; align-items: center; margin-top:0;  }
 
-form#template-maker #template-field:before, form#template-maker #template-field:after { color:#8f98a3; font-style: italic; }
+form#template-maker #template-field:before, form#template-maker #template-field:after { color:#8f98a3;}
 
 form#template-maker #template-field:before { content:"/"; margin-left:10px; margin-right:10px; }
 
 form#template-maker #template-field:after { content:".twig"; margin-left:10px; }
 
+form#template-maker.exists:not(.overwrite) #template-field:after { content:"_"attr(data-timestamp)".twig"; }
+
+/* form#template-maker.exists */
+form#template-maker warning-message {
+  display:none;
+  border-radius:4px;
+  margin-top:10px;
+  position:relative;
+  background-color:#F6F7FC;
+  padding:10px;
+}
+form#template-maker warning-message p em {
+  background: white;
+  padding: 3px 7px;
+  border: 1px solid #E5E5E7;
+  font-family: monospace;
+}
+
+form#template-maker warning-message p { margin-bottom:5px; font-weight:bold; }
+form#template-maker warning-message i { font-style: normal; margin-right:5px; }
+form#template-maker warning-message overwite-enabled { font-size:13px; }
+form#template-maker warning-message overwite-disabled {  font-size:13px; }
+form#template-maker.exists warning-message { display:block; }
+
 /* Overwrite Checkbox */
 
-form#template-maker #overwrite + label { margin-top:10px; }
+form#template-maker #overwrite + label { display:none; margin-top:10px; margin-bottom:10px;  }
+form#template-maker #overwrite:checked ~ overwite-enabled { display:block; }
+form#template-maker #overwrite:checked ~ overwite-disabled { display:none; }
+form#template-maker #overwrite ~ overwite-enabled { display:none; }
+form#template-maker #overwrite ~ overwite-disabled { display:block; }
+form#template-maker.exists #overwrite + label { display:block; }
 
 /* Submit Button */
 
