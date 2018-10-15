@@ -1,5 +1,8 @@
 # Helpers Changelog
 
+## 1.0.5 - 2018-
+
+
 ## 1.0.4 - 2018-10-11
 ### Added
 - Template Maker tests
