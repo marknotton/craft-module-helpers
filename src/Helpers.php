@@ -142,15 +142,6 @@ class Helpers extends Module {
         }
       }
 
-      // Event::on(SystemMessages::class, SystemMessages::EVENT_REGISTER_MESSAGES, function(RegisterEmailMessagesEvent $event) {
-      //   $event->messages[] = [
-      //     'key'     => 'my_message_key',
-      //     'heading' => Craft::t('core-module', 'Email Heading'),
-      //     'subject' => Craft::t('core-module', 'Email Subject'),
-      //     'body'    => Craft::t('core-module', 'The plain text email body...'),
-      //   ];
-      // });
-
       // Add versioning class if versioning is enabled in the config.json
       if ( self::$config['versioning'] ?? false ) {
         self::$app->setComponents([
@@ -197,8 +188,6 @@ class Helpers extends Module {
           }
         );
 
-
-
         Helpers::$app->service->themer();
         Helpers::$app->service->installation();
 
@@ -216,17 +205,6 @@ class Helpers extends Module {
 
     }
 
-    // TODO: Only allow TemplateMaker to set if it's a CP Request or Controller Request.
-    // The follow condition doesn't seem to work if a controller is calling TemplateMaker
-    // if ( Craft::$app->getRequest()->getIsActionRequest() || Craft::$app->getRequest()->getIsCpRequest() ) {
-      // Add templateMaker class if template-maker is enabled in the config/helpers.php
-      if (getenv('ENVIRONMENT') == 'dev' && Helpers::$app->request->admin() && (self::$settings['cms']['template-maker'] ?? false )) {
-        self::$app->setComponents([
-          'templateMaker' => \modules\helpers\services\TemplateMaker::class
-        ]);
-        Helpers::$app->templateMaker->init();
-      }
-    // }
 
     // Register site routes
     Event::on(
@@ -235,26 +213,8 @@ class Helpers extends Module {
       // UrlManager::EVENT_REGISTER_CP_URL_RULES,
       function (RegisterUrlRulesEvent $event) {
         $event->rules['fetch-template'] = 'helpers/fetch/template';
-        if (getenv('ENVIRONMENT') == 'dev') {
-          $event->rules['template-maker'] = 'helpers/template-maker/default';
-        }
       }
     );
-
-    // $aliases = [
-    //   'root'              => Craft::getAlias('@root'),
-    //   'lib'               => Craft::getAlias('@lib'),
-    //   'craft'             => Craft::getAlias('@craft'),
-    //   'config'            => Craft::getAlias('@config'),
-    //   'contentMigrations' => Craft::getAlias('@contentMigrations'),
-    //   'storage'           => Craft::getAlias('@storage'),
-    //   'templates'         => Craft::getAlias('@templates'),
-    //   'translations'      => Craft::getAlias('@translations')
-    // ];
-    //
-    // echo '<pre>';
-    // var_dump($aliases);
-    // echo '</pre>'; die;
 
     Craft::info(
       Craft::t(
