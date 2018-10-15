@@ -20,7 +20,13 @@
 		value: template ?? ''
 	}) }}
 
+	<p class="notice">
+		<i>ℹ️</i>A change in the field layout was detected. Remember to save this entry
+		type before attempting to generate the template file.
+	</p>
+
 	<warning-message>
+
 		<p>
 			<i>⚠️</i>It looks like the template file <em></em> already exists.
 		</p>
@@ -41,10 +47,10 @@
 	</warning-message>
 
 	{% js at head %}
-		var sectionId = "{{ id }}";
+		var sectionId       = "{{ id }}";
 		var defaultTemplate = "{{ template }}";
-		var timestamp = "{{ timestamp }}";
-		var existingFiles = JSON.parse('{{ existingFiles|raw }}');
+		var timestamp       = "{{ timestamp }}";
+		var existingFiles   = JSON.parse('{{ existingFiles|raw }}');
 	{% endjs %}
 
 	<button class="btn submit" type="submit">Generate Template File</submit>

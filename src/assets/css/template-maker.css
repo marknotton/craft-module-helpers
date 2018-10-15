@@ -1,5 +1,8 @@
 form#template-maker { position:relative; background-color:white; border-top:1px solid #E5E5E7; background-clip: padding-box; padding: 24px; }
 
+form#template-maker > p.notice { font-weight:bold; display:none; }
+form#template-maker > p.notice i { font-style: normal; margin-right:5px; }
+
 form#template-maker:before {
   content:"";
   pointer-events:none;
@@ -96,7 +99,7 @@ form#template-maker warning-message p em {
 }
 
 form#template-maker warning-message p { margin-bottom:5px; font-weight:bold; }
-form#template-maker warning-message i { font-style: normal; margin-right:5px; }
+form#template-maker warning-message p i { font-style: normal; margin-right:5px; }
 form#template-maker warning-message overwite-enabled { font-size:13px; }
 form#template-maker warning-message overwite-disabled {  font-size:13px; }
 form#template-maker.exists warning-message { display:block; }

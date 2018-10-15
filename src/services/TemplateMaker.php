@@ -20,6 +20,10 @@ class TemplateMaker extends Component {
   private $segments;
   private $section;
 
+  // ---------------------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------------------
+
   public function init() {
 
     // Globally define the URL segments
@@ -40,8 +44,8 @@ class TemplateMaker extends Component {
       if (!empty($this->section) && !empty($sectionId) && is_numeric($sectionId) ) {
 
         // Set the path name and and template name.
-        $path = $this->getPath();
-        $templateName = $this->getTemplateName();
+        $path = $this->pathSanitiser();
+        $templateName = $this->templateSantiser();
 
         // Set a timestamp to be used as a filename suffix should there be a naming conflict.
         $timestamp = time();
@@ -79,7 +83,11 @@ class TemplateMaker extends Component {
     }
   }
 
-  private function getPath() {
+  // ---------------------------------------------------------------------------
+  // Path Sanitiser
+  // ---------------------------------------------------------------------------
+
+  private function pathSanitiser() {
 
     // Using the original URI Format for this section, clean up path
     // by removing any dynamic twig variables and Kebabifing the path.
@@ -92,7 +100,11 @@ class TemplateMaker extends Component {
     }
   }
 
-  private function getTemplateName() {
+  // ---------------------------------------------------------------------------
+  // Template Name Sanitiser
+  // ---------------------------------------------------------------------------
+
+  private function templateSantiser() {
 
     // If there is more than one entry type associated to the current section...
     if ( count($this->section['entrytypes']) > 1 ) {
@@ -133,6 +145,10 @@ class TemplateMaker extends Component {
     }
 
   }
+
+  // ---------------------------------------------------------------------------
+  // Create Template
+  // ---------------------------------------------------------------------------
 
   public function create($tabs, $section) {
 

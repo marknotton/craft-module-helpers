@@ -20,6 +20,7 @@ if ( typeof templateMaker !== 'undefined' && 'fetch' in window) {
   var filePathAndName = '';
   var templatemaker = {
     form      : $('form#template-maker'),
+    notice    : $('form#template-maker > p.notice'),
     path      : $('form#template-maker input#path'),
     template  : $('form#template-maker input#template'),
     overwrite : $('form#template-maker #overwrite'),
@@ -29,6 +30,16 @@ if ( typeof templateMaker !== 'undefined' && 'fetch' in window) {
   var handleInput = $('form#main-form input#handle');
 
   $('#template-field').attr('data-timestamp', timestamp);
+
+  // If any elements are moved aroud show a message advising the user
+  // to save the entrytype before creating a template.
+  $(function() {
+    $(".fld-tabs").on('DOMSubtreeModified', function() {
+        $(this).unbind('DOMSubtreeModified');
+        templatemaker.notice.show();
+    });
+  });
+
 
   // ===========================================================================
   // File name and path sanitiser
@@ -122,6 +133,7 @@ if ( typeof templateMaker !== 'undefined' && 'fetch' in window) {
 
     event.preventDefault();
 
+    // If overwrite is checked, show a popup message with one final warning.
     if (templatemaker.overwrite.is(":checked")) {
       if (!confirm("You are about to overwrite: "+filePathAndName+".\n Are you sure you want to do this? This can not be undone.")) {
         setError('Template file was not created');
@@ -129,8 +141,10 @@ if ( typeof templateMaker !== 'undefined' && 'fetch' in window) {
       }
     }
 
+    // Apply the loading class to disable any further input and show the animation.
     templatemaker.form.addClass('loading');
 
+    
     if ( sectionId ) {
 
       fetch('/template-maker', {
