@@ -94,6 +94,9 @@ if ( typeof templateMaker !== 'undefined' && 'fetch' in window) {
     // Update the template field on-the-fly whilst the handle input changes.
     handleInput.on('change input', function() {
       templatemaker.template.val(handleInput.val().replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase());
+      if ( templatemaker.template.val() == templatemaker.path.val()) {
+        templatemaker.template.first().val('index');
+      }
     });
 
   }
