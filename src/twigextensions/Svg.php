@@ -35,7 +35,7 @@ class Svg extends Extension {
    * @return string
    *
    */
-  public function svg() {
+  public function svg($svg, $sanitize = true, $namespace = null, $classes = null, $id = null) {
 
     // Fail if no parameters are passed
     if ( func_num_args() < 1 ){
@@ -47,10 +47,6 @@ class Svg extends Extension {
 
     // Remove the first argument and set the arguments array
     $arguments = array_slice(func_get_args(), 1);
-
-		$sanitize = true;
-    $classes  = null;
-		$id       = null;
 
 		// Run through the settings and define the appropriate variables
     if ( isset($arguments) ){
