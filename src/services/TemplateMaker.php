@@ -19,6 +19,7 @@ class TemplateMaker extends Component {
   private $sections;
   private $segments;
   private $section;
+  private $tabLength = 2;
 
   // ---------------------------------------------------------------------------
   // Init
@@ -233,10 +234,12 @@ class TemplateMaker extends Component {
           if (file_exists($sampleFile)) {
 
             // Add the correct amount of devider characters for consistency.
-            $deviders = str_repeat('-', 80 - (strlen($field['name']) + 7) - ($tabIndentationCount*4));
+            $type = explode('\\', $field['type']);
+            // $deviders = str_repeat('-', 80 - (strlen($field['name']) + 7) - (strlen($type)) - ($tabIndentationCount*4));
 
             // Comment line for the field name.
-            $layout .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders." #}\n";
+            // $layout .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
+            $layout .= $this->commentHeader($field['name'], end($type), 2);
 
             // Get sample file contents.
             $fieldContent = file_get_contents($sampleFile);
@@ -274,6 +277,37 @@ class TemplateMaker extends Component {
     fwrite($newTemplate, $layout);
 
     return [ 'filename' => $newTemplateFileName, 'path' => $newTemplateFilePath, 'uri' => $uri];
+
+  }
+
+  private function commentInline($heading, $suffix = null, $tabs = 1, $seperator = "-") {
+
+    $maxLength       = 80;
+    $suffix          = !empty($suffix) ? ' ['.$suffix.']' : '';
+    $totalLength     = strlen($heading) + strlen($suffix) + ($tabs*$this->tabLength);
+    $seperatorLength = ($maxLength - $totalLength) < 0 ? 5 : ($maxLength - $totalLength);
+    $seperators      = str_repeat($seperator, $seperatorLength);
+    $tabs            = str_repeat("\t", $tabs);
+    $comment         = "\n".$tabs."{# ".$heading." ".$seperators.$suffix." #}\n";
+
+    return $comment;
+  }
+
+  private function commentHeader($heading, $suffix = null, $tabs = 2, $seperator = "=") {
+
+    $maxLength       = 80;
+    $suffix          = !empty($suffix) ? '['.$suffix.']' : '';
+    $totalLength     = strlen($heading) + strlen($suffix) + ($tabs*$this->tabLength);
+    $seperatorLength = ($maxLength - $totalLength) < 0 ? 5 : ($maxLength - $totalLength);
+    $seperators      = str_repeat($seperator, $seperatorLength);
+    $tabs            = str_repeat("\t", $tabs);
+    $seperators1      = str_repeat($seperator, $maxLength);
+    $seperators2      = str_repeat(' ', $seperatorLength);
+    $comment         = "\n".$tabs."{# ".$seperators1." #}";
+    $comment        .= "\n".$tabs."{# ".$heading." ".$seperators2.$suffix." #}";
+    $comment        .= "\n".$tabs."{# ".$seperators1." #}\n";
+
+    return $comment;
 
   }
 

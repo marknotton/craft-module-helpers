@@ -1,9 +1,9 @@
-{% set table = entry.fieldHandle ?? false %}
+{% set fieldHandle = entry.fieldHandle ?? false %}
 
 {% if table %}
 
-  {% set columns = table.columns %}
-  {% set rows    = table.rows %}
+  {% set columns = fieldHandle.columns %}
+  {% set rows    = fieldHandle.rows %}
 
   <table class="stylised">
 

@@ -82,7 +82,7 @@ class Queries extends Component {
 
   /**
    * Get all the section routes rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -139,7 +139,7 @@ class Queries extends Component {
 
   /**
    * Get all the entries routes
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -166,7 +166,7 @@ class Queries extends Component {
 
   /**
    * Get all the categories routes
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -193,7 +193,7 @@ class Queries extends Component {
 
   /**
    * Get all the entrues and categories routes
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -207,8 +207,9 @@ class Queries extends Component {
 
   /**
    * Get all the section routes rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
+   * @param  bool   $includeTypes [default:false] Include entry type id, name, handle, and title data too.
    * @return array
    */
   public function sectionRouteRules() {
@@ -223,6 +224,7 @@ class Queries extends Component {
     $command = Craft::$app->db->createCommand($sql);
     $results = $command->queryAll();
 
+    // TODO: Make the include of entry type data optional. $includeTypes
     // TODO: Get entry type data via mySQL command, not this faff...
     // $allSections = Craft::$app->getSections()->getAllSections();
     foreach ($results as $key => $section) {
@@ -243,7 +245,7 @@ class Queries extends Component {
 
   /**
    * Get all the category routes rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -265,7 +267,7 @@ class Queries extends Component {
 
   /**
    * Get all the route rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -301,7 +303,7 @@ class Queries extends Component {
 
   /**
    * Get all the section, category, and route rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -332,7 +334,7 @@ class Queries extends Component {
 
   /**
    * Get everything
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
