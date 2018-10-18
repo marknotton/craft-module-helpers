@@ -49,25 +49,33 @@ const debounce = (fn, time = 10) => {
 ////////////////////////////////////////////////////////////////////////////////
 // These add 'width' and 'height' getters to the window and document objects respectively
 
-Object.defineProperty(window, 'width', {
-  get : () => { return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth }
-});
+if ( typeof window.width == 'undefined' ) {
+  Object.defineProperty(window, 'width', {
+    get : () => { return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth }
+  });
+}
 
-Object.defineProperty(window, 'height', {
-  get : () => { return window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight }
-});
+if ( typeof window.height == 'undefined' ) {
+  Object.defineProperty(window, 'height', {
+    get : () => { return window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight }
+  });
+}
 
-Object.defineProperty(document, 'width', {
-  get : (body = document.body, html = document.documentElement) => {
-    return Math.max( body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth );
-  }
-});
+if ( typeof document.width == 'undefined' ) {
+  Object.defineProperty(document, 'width', {
+    get : (body = document.body, html = document.documentElement) => {
+      return Math.max( body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth );
+    }
+  });
+}
 
-Object.defineProperty(document, 'height', {
-  get : (body = document.body, html = document.documentElement) => {
-    return Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight );
-  }
-});
+if ( typeof document.height == 'undefined' ) {
+  Object.defineProperty(document, 'height', {
+    get : (body = document.body, html = document.documentElement) => {
+      return Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight );
+    }
+  });
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Disable Console Logging on Production Environments for non-admins.
@@ -93,9 +101,11 @@ if ( document.body.classList.contains('production-environment') && !document.bod
           window._logger.old = console.log;
           window['console']['log'] = function() {};
         }
-      } 
+      }
     }
   });
+
+  logger = false;
 
 }
 
