@@ -20,9 +20,18 @@
 		value: template ?? ''
 	}) }}
 
-	<p class="notice">
+	<p class="notice change">
 		<i>ℹ️</i>A change in the field layout was detected. Remember to save this entry
 		type before attempting to generate the template file.
+	</p>
+
+	<p class="notice success" data-templates="{{ alias('@templates') }}">
+		<i>✅</i>A new template file was created <em></em>
+	</p>
+
+	<p class="notice error">
+		<i>❌</i>There was an error creating the template file <em></em>
+		<span></span>
 	</p>
 
 	<warning-message>
@@ -32,7 +41,7 @@
 		</p>
 
 		{{ forms.checkbox({
-			id: 'overwrite',
+			id : 'overwrite',
 		  label: 'Overwrite template',
 			name: 'overwrite',
 			value: 'false'
@@ -47,10 +56,13 @@
 	</warning-message>
 
 	{% js at head %}
-		var sectionId       = "{{ id }}";
-		var defaultTemplate = "{{ template }}";
-		var timestamp       = "{{ timestamp }}";
-		var existingFiles   = JSON.parse('{{ existingFiles|raw }}');
+		var templateMakerOptions = {
+			id        : {{ id }},
+			path      : "{{ path }}",
+			template  : "{{ template }}",
+			timestamp : "{{ timestamp }}",
+			allFiles  : JSON.parse('{{ allFiles|raw }}')
+		}
 	{% endjs %}
 
 	<button class="btn submit" type="submit">Generate Template File</submit>

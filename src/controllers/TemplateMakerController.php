@@ -28,24 +28,16 @@ class TemplateMakerController extends Controller {
     extract((array)$data);
 
     // Default response
-    $response = [
-      'message' => 'Entry Type ID was not defined in your body param',
-      'data' => $data
-    ];
+    $response = [];
 
     if(!empty($id)){
 
       try{
 
-        $settings = Helpers::$app->request->getSettings();
-        $entryType = Entry::find()->typeId($id)->all()[0];
-
-        $response['success'] = true;
-        $response['message'] = 'Entry Type for '.$entryType->title.' found';
-
         $sectionData = Helpers::$app->query->sectionRouteRules();
         $fieldsData  = Helpers::$app->query->fields();
 
+        $entryType = Entry::find()->typeId($id)->all()[0];
         $section = $sectionData[array_search($entryType->sectionId, array_column($sectionData, 'id'))];
 
         $tabs = [];
@@ -63,19 +55,25 @@ class TemplateMakerController extends Controller {
             ];
           }
         }
-        Helpers::$app->templateMaker->create($tabs, $section);
-        $template = Helpers::$app->templateMaker->create($tabs, $section);
 
-        $response['template'] = $template;
-        $response['tabs']     = $tabs;
-        $response['section']  = $section;
-        $response['filename']  = $filename;
+        $response['success'] = true;
+        // $response['newTimestamp'] = Helpers::$app->templateMaker->timestamp();
+
+        $creation = Helpers::$app->templateMaker->create([
+          'tabs'      => $tabs ?? false,
+          'id'        => $id,
+          'path'      => $path,
+          'template'  => $template,
+          'timestamp' => $timestamp
+        ]);
+
+        $response = array_merge($response, $creation);
+
         // Craft::$app->getSession()->setNotice("Template Created");
 
       } catch(\Exception $e) {
 
         $response['error'] = true;
-        unset($response['success']);
         $response['message'] = $e->getMessage();
 
         // Craft::$app->session->setError("Failed to create template");

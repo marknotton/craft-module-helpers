@@ -1,6 +1,10 @@
 form#template-maker { position:relative; background-color:white; border-top:1px solid #E5E5E7; background-clip: padding-box; padding: 24px; }
 
-form#template-maker > p.notice { font-weight:bold; display:none; }
+form#template-maker > p.notice { font-weight:bold; display:none; line-height:24px;  }
+form#template-maker > p.notice.change { color:#5286d9 !important; }
+form#template-maker > p.notice.success { color:#00C700 !important; }
+form#template-maker > p.notice.error { color:#E80000 !important; }
+form#template-maker > p.notice.error span { font-weight:normal; display:block;  }
 form#template-maker > p.notice i { font-style: normal; margin-right:5px; }
 
 form#template-maker:before {
@@ -91,11 +95,12 @@ form#template-maker warning-message {
   background-color:#F6F7FC;
   padding:10px;
 }
-form#template-maker warning-message p em {
+form#template-maker p em {
   background: white;
   padding: 3px 7px;
   border: 1px solid #E5E5E7;
   font-family: monospace;
+  color:#29323d !important;
 }
 
 form#template-maker warning-message p { margin-bottom:5px; font-weight:bold; }

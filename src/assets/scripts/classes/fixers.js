@@ -3,7 +3,7 @@
  * @constructor
  * @param {args} methods - List of methods you want to include. Leave blank to apply all methods
  * @example new Fixers(); // Runs all fixers
- * @example new Fixers('fastclick', 'links') // Runs only the fastclick and links fixers;
+ * @example new Fixers('featuredImages', 'links') // Runs only the fastclick and links fixers;
  */
 
 class Fixers {
@@ -47,17 +47,6 @@ class Fixers {
             $this.css('background-image', 'url('+(mobile ? $this.data('mobile') : $this.data('desktop'))+')').find('img').hide();
           }
         })
-      }
-    }
-  }
-
-  // Add fastlick support for mobile devices
-  fastclick () {
-    if (typeof mobile !== 'undefined' && typeof tablet !== 'undefined' ) {
-      if ( mobile || tablet ) {
-        if ( typeof FastClick !== 'undefined' ) {
-          FastClick.attach(document.body);
-        }
       }
     }
   }

@@ -81,7 +81,7 @@ class Queries extends Component {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Get all the section routes rules
+   * Get all the input field data
    * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array

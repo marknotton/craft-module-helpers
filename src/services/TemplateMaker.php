@@ -21,6 +21,51 @@ class TemplateMaker extends Component {
   private $section;
   private $tabLength = 2;
 
+  // Exclude these tabs from being generated.
+  private $tabExclusions = ['seo'];
+
+  // Elements Tags that are valid markup and don't need to be validated.
+  private $elementExceptions = ['main', 'nav', 'aside', 'header', 'footer', 'article', 'section'];
+
+  // Matching tab names should be rendered in their own block types of they exist.
+  private $blocks = ['navigation', 'header', 'main', 'content', 'aside', 'footer'];
+
+  // Field Aliases
+  // If field has a specific handle, refer to sample file by reference
+  private $fieldAliases = [
+    'featuredImage' => 'featured-image',
+    'body'          => 'body',
+    'contentBlocks' => 'content-blocks'
+  ];
+
+  // Assign a field type to a file.
+  private $fieldFiles = [
+    // Craft CMS
+    'craft\fields\Assets'       => 'Assets',
+    'craft\fields\Matrix'       => 'Matrix',
+    'craft\fields\PlainText'    => 'PlainText',
+    'craft\fields\Categories'   => 'Categories',
+    'craft\fields\Checkboxes'   => 'Checkboxes',
+    'craft\fields\Color'        => 'Color',
+    'craft\fields\Date'         => 'Date',
+    'craft\fields\Dropdown'     => 'Dropdown',
+    'craft\fields\Email'        => 'Email',
+    'craft\fields\Lightswitch'  => 'Lightswitch',
+    'craft\fields\MultiSelect'  => 'MultiSelect',
+    'craft\fields\Number'       => 'Number',
+    'craft\fields\Entries'      => 'Entries',
+    'craft\fields\RadioButtons' => 'RadioButtons',
+    'craft\fields\Table'        => 'Table',
+    'craft\fields\Tags'         => 'Tags',
+    'craft\fields\Url'          => 'Url',
+    'craft\fields\Users'        => 'Users',
+    'craft\redactor\Field'      => 'Redactor',
+    // Third Party
+    'modules\helpers\fields\Video' => 'Video',
+    'verbb\supertable\fields\SuperTableField' => 'SuperTable',
+    'supercool\tablemaker\fields\TableMakerField' => 'TableMaker'
+  ];
+
   // ---------------------------------------------------------------------------
   // Init
   // ---------------------------------------------------------------------------
@@ -49,12 +94,12 @@ class TemplateMaker extends Component {
         $templateName = $this->templateSantiser();
 
         // Set a timestamp to be used as a filename suffix should there be a naming conflict.
-        $timestamp = time();
+        $timestamp = $this->timestamp();
 
         // Get a list of all the files that exist in the templates directory.
         // This will be tested against to instruct users if they are about to
         // overwrite a existing file.
-        $existingFiles = json_encode(Helpers::$app->request->getFileDirectory(null)) ?? [];
+        $allFiles = json_encode(Helpers::$app->request->getFileDirectory(null)) ?? [];
 
         // It's unlikely the path name and template name will ever be the same.
         // If this occures, force the template name to '_entry'
@@ -64,24 +109,28 @@ class TemplateMaker extends Component {
 
         // Define a bunch of data that will passed into the template maker form
         $settings = [
-          'id'            => $sectionId,
-          'path'          => $path,
-          'template'      => $templateName,
-          'timestamp'     => $timestamp,
-          'existingFiles' => $existingFiles
+          'id'        => $sectionId,
+          'path'      => $path,
+          'template'  => $templateName,
+          'timestamp' => $timestamp,
+          'allFiles'  => $allFiles,
         ];
 
         // Render the template-maker form and return the markup.
-        $template = Craft::$app->view->renderTemplate("helpers/_components/template-maker/input", $settings);
+        $template = Craft::$app->view->renderTemplate("helpers/_template-maker/form", $settings);
 
         // Store the template markup as a string in a Javascript variable
-        $templateMakerForm = "var templateMaker = '".str_replace(array("\n", "\r"), '', $template)."';";
+        $templateMakerForm = "var templateMakerForm = '".str_replace(array("\n", "\r"), '', $template)."';";
 
         // Render the $templateMakerForm variable into the current entry type page.
         // The 'src/assets/scripts/tempalte-maker.js' will append the form to the bottom of the page.
         Craft::$app->getView()->registerJs($templateMakerForm, View::POS_HEAD);
       }
     }
+  }
+
+  public function timestamp() {
+    return time();
   }
 
   // ---------------------------------------------------------------------------
@@ -151,53 +200,34 @@ class TemplateMaker extends Component {
   // Create Template
   // ---------------------------------------------------------------------------
 
-  public function create($tabs, $section) {
+  public function create() {
+
+    // Extract the settings array into variables
+    extract((array)func_get_args()[0]);
+
+    $path = !empty($path) ? rtrim('/'.$path, '/') : '';
+    $template = $template.$timestamp.'.twig';
+    $templatePath = Craft::getAlias('@templates').$path.'/'.$template;
+
+    $layout = Helpers::$app->request->fileexists(
+      Craft::getAlias('@templates').'/_layouts/generic.twig',              // Look for this file
+      Craft::getAlias('@helpers').'/templates/_template-maker/layout.twig' // Fallback to this one.
+    );
 
     // Get contents of a generic template.
-    $layout = file_get_contents(Craft::getAlias('@templates').'/_layouts/generic.twig');
+    $layout = file_get_contents($layout);
 
-    // Define the name of the new template file.
-    $newTemplateFileName = $section['handle'];
-
-    if ( $section['uriFormat'] == '_loader' || $section['uriFormat'] == '_loader.twig') {
-      $uri = StringHelper::toKebabCase(trim(preg_replace('/{.*?\}/m', '', $section['uriFormat']),'/').'/' ?? '');
-    } else {
-      $uri = $section['uriFormat'];
+    // If path is a directory, recursively generate the the folder structure.
+    if (!empty($path) && !is_dir(Craft::getAlias('@templates').'/'.$path)) {
+      mkdir(Craft::getAlias('@templates').'/'.$path, 0777, true);
     }
-
-    if ( $uri == "__home__" ) {
-      $uri = "";
-      $newTemplateFileName = "home";
-    }
-
-
-    $newTemplateFilePath = Craft::getAlias('@templates').'/'.$uri.$newTemplateFileName.'.twig';
 
     // Tab indentation count
-    $tabIndentationCount = 1;
-    $tabIndentation = str_repeat("\t", $tabIndentationCount);
+    // $tabIndentationCount = 1;
+    $tabIndentation = str_repeat("\t", 1);
 
     // Create a new file.
-    $newTemplate = fopen($newTemplateFilePath, 'w') or die('Cannot open file:  '.$newTemplateFilePath);
-
-    // Exclude these tabs from being generated.
-    $tabExclusions = ['seo'];
-
-    // Elements Tags that are valid markup and don't need to be validated.
-    $elementExceptions = ['main', 'nav', 'aside', 'header', 'footer', 'article', 'section'];
-
-    // Matching tabs names should be rendered in these block types of they exist.
-    $blocks = ['navigation', 'header', 'main', 'content', 'aside', 'footer'];
-
-    // Special Rules
-    // TODO: Create specials rules to generate an include for speicficl field handles
-    // and also redirect specific field types to a different sample file.
-    $fieldAliases = [
-      'supercool\tablemaker\fields\TableMakerField' => 'TableMaker',
-      'craft\redactor\Field' => 'Redactor',
-      'featuredImage' => 'FeaturedImage',
-      'body' => 'Body'
-    ];
+    $newTemplate = fopen($templatePath, 'w') or die('Cannot open file:  '.$templatePath);
 
     // Loop through all tabs.
     foreach ($tabs as $tab => $fields) {
@@ -206,17 +236,16 @@ class TemplateMaker extends Component {
       $element = StringHelper::toKebabCase($tab);
 
       // Ignore specific tabs.
-      if ( !in_array($element, $tabExclusions) ) {
+      if ( !in_array($element, $this->tabExclusions) ) {
 
-        // If the element name happens to be a valid HTML5 tag, leave it as it is.
-        // Otherwise check if at least one hyphen exists. If it doesn't, add one
-        // to ensure valid custom element markup.
-        // TODO: Above comment
+        // Ensure the element has at lease one hyphen within the string,
+        // unless the string is a known valid HTML5 singleton.
+        if ( !in_array($element, $this->elementExceptions) && !strpos($element, '-') !== false ) {
+          $element = $element.'-tab';
+        }
 
         // Comment line for the tab name.
-        $layout .= "\n".$tabIndentation."{# ".str_repeat('=', 74 - ($tabIndentationCount*2))." #}\n";
-        $layout .= $tabIndentation."{# ".$tab." Tab ".str_repeat(' ', 80 - (strlen($tab) + 11) - ($tabIndentationCount*2))." #}\n";
-        $layout .= $tabIndentation."{# ".str_repeat('=', 74 - ($tabIndentationCount*2))." #}\n";
+        $layout .= $this->commentHeader($tab.' Tab');
 
         // Tab open element.
         $layout .= "\n".$tabIndentation."<".$element.">\n";
@@ -225,21 +254,17 @@ class TemplateMaker extends Component {
         foreach ($fields as $field) {
 
           // Turn field type string into array.
-          $sampleFile = explode('\\', $field['type']);
+          $sampleFileName = $this->fieldFiles[$field['type']];
 
           // Define a sample file path for the field type.
-          $sampleFile = Craft::getAlias('@helpers').'/templates/_samples/'.$sampleFile[count($sampleFile) - 1].'.twig';
+          $sampleFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$sampleFileName.'.twig';
 
           // If the file exists.
           if (file_exists($sampleFile)) {
 
-            // Add the correct amount of devider characters for consistency.
-            $type = explode('\\', $field['type']);
-            // $deviders = str_repeat('-', 80 - (strlen($field['name']) + 7) - (strlen($type)) - ($tabIndentationCount*4));
-
             // Comment line for the field name.
             // $layout .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
-            $layout .= $this->commentHeader($field['name'], end($type), 2);
+            $layout .= $this->commentHeader($field['name'], $sampleFileName, 2);
 
             // Get sample file contents.
             $fieldContent = file_get_contents($sampleFile);
@@ -276,7 +301,14 @@ class TemplateMaker extends Component {
     // Write template file.
     fwrite($newTemplate, $layout);
 
-    return [ 'filename' => $newTemplateFileName, 'path' => $newTemplateFilePath, 'uri' => $uri];
+    return [
+      'id'                 => $id,
+      'path'               => ltrim($path, '/'),
+      'template'           => $template,
+      'templateSystemPath' => $templatePath,
+      'templatePath'       => ltrim(str_replace(Craft::getAlias('@templates'), '', $templatePath), '/'),
+      'newTimestamp'       => $this->timestamp()
+    ];
 
   }
 

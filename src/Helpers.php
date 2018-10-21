@@ -57,6 +57,7 @@ class Helpers extends Module {
 
     Craft::setAlias('@modules/helpers', $this->getBasePath());
     Craft::setAlias('@helpers', $this->getBasePath());
+    Craft::setAlias('@public', getcwd());
 
     $this->controllerNamespace = 'modules\helpers\controllers';
 
@@ -196,8 +197,6 @@ class Helpers extends Module {
             }
           }
         );
-
-
 
         Helpers::$app->service->themer();
         Helpers::$app->service->installation();
