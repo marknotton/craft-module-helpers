@@ -274,7 +274,8 @@ class TemplateMaker {
         } else {
           setError('Failed to created Template');
           this.elements.form.addClass('error');
-          this.notices.error.show().find('em').text(data.templatePath).find('span').text(data.message);
+          this.notices.error.show().find('em').text(data.templatePath || this.template+'.twig')
+          this.notices.error.find('span').text(data.message);
           this.notices.success.hide();
           setTimeout(() => { this.elements.form.removeClass('error loading') }, 1000);
           console.error(data.message);
@@ -298,12 +299,13 @@ class TemplateMaker {
 // - Fetch method exists in the window object
 // - Craft's own FLD function exists to ensure this script is loading on the right page.
 // - The `templateMakerOptions` variable with the options must exists.
+// - Make sure there is at least one tab created before.
 
 var templatemaker = null;
 
 $(function() {
 
-  if ( typeof templateMakerOptions !== 'undefined' && 'fetch' in window && typeof initFLD !== 'undefined') {
+  if ( typeof templateMakerOptions !== 'undefined' && 'fetch' in window && typeof initFLD !== 'undefined' && $.trim($('#fieldlayoutform .fld-tabs').html()) !== '' ) {
 
     templatemaker = new TemplateMaker(templateMakerOptions);
 

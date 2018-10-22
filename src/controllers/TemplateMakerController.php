@@ -57,7 +57,6 @@ class TemplateMakerController extends Controller {
         }
 
         $response['success'] = true;
-        // $response['newTimestamp'] = Helpers::$app->templateMaker->timestamp();
 
         $creation = Helpers::$app->templateMaker->create([
           'tabs'      => $tabs ?? false,
@@ -73,6 +72,9 @@ class TemplateMakerController extends Controller {
 
       } catch(\Exception $e) {
 
+        $templatePath = ltrim(rtrim('/'.$path, '/').'/'.$template.$timestamp.'.twig', '/');
+
+        $response['templatePath'] = $templatePath;
         $response['error'] = true;
         $response['message'] = $e->getMessage();
 

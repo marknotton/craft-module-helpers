@@ -1,7 +1,7 @@
 {% set fieldHandle = entry.fieldHandle %}
 
 {% if fieldHandle is not empty %}
-  <time datatime="{{ fieldHandle|date('c') }}">
+  <time datetime="{{ fieldHandle|date('c') }}">
     {{ fieldHandle|date("d M Y") }}
   </time>
 {% endif %}

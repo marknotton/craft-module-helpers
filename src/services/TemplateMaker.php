@@ -199,7 +199,7 @@ class TemplateMaker extends Component {
 
       // Lastly if all else fails. Fallback to the original template name.
       // But sanitise if by removing unwanted characters and dynamic twig variables.
-      return preg_replace('/{.*?\}/m', '', preg_replace('/\\.[^.\\s]{3,4}$/', '', $this->section['template']));
+      return StringHelper::toKebabCase(preg_replace('/{.*?\}/m', '', $this->section['template']));
 
     }
 
@@ -319,7 +319,7 @@ class TemplateMaker extends Component {
                 copy($sampleFile, $destination);
               }
 
-              $layout .= "\n{% include '_components/".$sampleFileName."' ignore missing %}\n";
+              $layout .= "\n{% include '_components/".$sampleFileName."' %}\n";
 
             } else {
 
