@@ -51,11 +51,7 @@ class TemplateMaker {
     // Overwrite checkbox listener ---------------------------------------------
 
     this.elements.overwrite.on('change', (event) => {
-      if (this.elements.overwrite.is(':checked')) {
-        this.elements.form.addClass('overwrite');
-      } else {
-        this.elements.form.removeClass('overwrite');
-      }
+      this.overwrite();
     })
 
     // Input listener for path and template fields -----------------------------
@@ -77,6 +73,23 @@ class TemplateMaker {
     this.sanitiser();
     this.fieldUpdater();
 
+  }
+
+  // ===========================================================================
+  // Handle the overwrite class that effects styling on the form
+  // ===========================================================================
+
+  overwrite (bool) {
+
+    if ( bool !== 'undefined' && typeof(bool) === "boolean" ) {
+      this.elements.overwrite.prop('checked', bool);
+    }
+
+    if (this.elements.overwrite.is(':checked')) {
+      this.elements.form.addClass('overwrite');
+    } else {
+      this.elements.form.removeClass('overwrite');
+    }
   }
 
   // ===========================================================================
@@ -249,10 +262,10 @@ class TemplateMaker {
       response.json().then(data => {
         if (response.ok && !data.error) {
           this.allFiles.push(data.templatePath);
+          this.overwrite(false);
           this.stamp(data.newTimestamp);
           this.sanitiser();
           setNotice('Template Created');
-          this.elements.overwrite.prop('checked', false);
           this.elements.form.removeClass('loading');
           this.notices.success.show().find('em').text(data.templateSystemPath);
           this.notices.error.hide();

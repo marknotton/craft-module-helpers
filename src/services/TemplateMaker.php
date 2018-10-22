@@ -253,21 +253,43 @@ class TemplateMaker extends Component {
         // Loop through all fields for this tab.
         foreach ($fields as $field) {
 
-          // Turn field type string into array.
-          $sampleFileName = $this->fieldFiles[$field['type']];
+          // If the handle matches a field alias, use a custom template instead
+          if (array_key_exists($field['handle'], $this->fieldAliases)) {
 
-          // Define a sample file path for the field type.
-          $sampleFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$sampleFileName.'.twig';
+            // If the field handle exists in the list field aliases array set the the associated filename
+            $sampleFileName = $this->fieldAliases[$field['handle']];
+
+            // Use the $sampleFileName to set a field type name to be used in the generated documentation.
+            $fieldTypeName = array_key_exists($field['type'], $this->fieldFiles) ? $this->fieldFiles[$field['type']] : $sampleFileName;
+
+            // Define a sample file path for the field type.
+            $sampleFile = Craft::getAlias('@helpers').'/templates/_template-maker/samples/'.$sampleFileName.'.twig';
+
+          } elseif (array_key_exists($field['type'], $this->fieldFiles)) {
+
+            // If the field type exists in the list field files array set the the associated filename
+            $sampleFileName = $this->fieldFiles[$field['type']];
+
+            // Use the $sampleFileName to set a field type name to be used in the generated documentation.
+            $fieldTypeName = $sampleFileName;
+
+            // Define a sample file path for the field type.
+            $sampleFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$sampleFileName.'.twig';
+
+          }
+
+          // Camel Case field types to include white space
+          $fieldTypeName = preg_replace('/([a-z])([A-Z])/s','$1 $2', $fieldTypeName);
 
           // If the file exists.
           if (file_exists($sampleFile)) {
 
-            // Comment line for the field name.
-            // $layout .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
-            $layout .= $this->commentHeader($field['name'], $sampleFileName, 2);
-
             // Get sample file contents.
             $fieldContent = file_get_contents($sampleFile);
+
+            // Comment line for the field name.
+            // $layout .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
+            $layout .= $this->commentInline($field['name'], $fieldTypeName, 2);
 
             // TODO: Add tabs on each line:
             // SEE: https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php
@@ -279,7 +301,6 @@ class TemplateMaker extends Component {
             //     # do something with $line
             //     $line = strtok( $separator );
             // }
-
 
             // Replace any instances of the string 'fieldHandle', and replace it
             // with the relivant fieldHandle.
