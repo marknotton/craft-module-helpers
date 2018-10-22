@@ -1,1 +1,65 @@
-{% include "_components/content-blocks" ignore missing %}
+{% if not entry.isFieldEmpty('contentBlocks') %}
+
+  {% set blocks =  blocks ?? entry.contentBlocks ?? false %}
+
+  {% if blocks %}
+
+    <content-blocks data-count="{{ blocks|length }}">
+
+      {% for block in blocks.all %}
+
+        {% set blocktype = block.type.handle %}
+
+        {% switch blocktype %}
+
+          {# ////////////////////////////////////////////////////////////////// #}
+          {# Accordions                                                         #}
+          {# ////////////////////////////////////////////////////////////////// #}
+
+          {% case "accordion" %}
+
+            {% for block in block.accordion.all %}
+              {% include "_components/accordion" ignore missing with { heading : block.heading , content : block.contents } only %}
+            {% endfor %}
+
+          {# ////////////////////////////////////////////////////////////////// #}
+          {# Standard text                                                      #}
+          {# ////////////////////////////////////////////////////////////////// #}
+
+          {% case "text" %}
+
+            {{ block.text|wrap('text-block') }}
+
+          {# ////////////////////////////////////////////////////////////////// #}
+          {# Qutoes                                                             #}
+          {# ////////////////////////////////////////////////////////////////// #}
+
+          {% case "quote" %}
+
+            {% include "_components/quote" ignore missing with { 'quote' : block.quote } only %}
+
+          {# ////////////////////////////////////////////////////////////////// #}
+          {# Videos                                                             #}
+          {# ////////////////////////////////////////////////////////////////// #}
+
+          {% case "video" %}
+
+            {% include "_components/video" ignore missing with { video : block.video } only %}
+
+          {# ////////////////////////////////////////////////////////////////// #}
+          {# All other block types                                              #}
+          {# ////////////////////////////////////////////////////////////////// #}
+
+          {% default %}
+
+            {% include ["_components/blocks/"~block.type, "_components/"~block.type] ignore missing with { (blocktype) : block[blocktype] ?? block } only %}
+
+        {% endswitch %}
+
+      {% endfor %}
+
+    </content-blocks>
+
+  {% endif %}
+
+{% endif %}

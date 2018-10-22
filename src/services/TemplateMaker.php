@@ -38,6 +38,14 @@ class TemplateMaker extends Component {
     'contentBlocks' => 'content-blocks'
   ];
 
+  // Field Aliases To Include
+  // If one of the above $fieldAliases is found, clone the file and set an include
+  // within the template markup. Otherwise, just include it's content.
+  private $fieldAliasesToInclude = [
+    'featured-image',
+    'content-blocks'
+  ];
+
   // Assign a field type to a file.
   private $fieldFiles = [
     // Craft CMS
@@ -188,6 +196,7 @@ class TemplateMaker extends Component {
       }
 
     } else {
+
       // Lastly if all else fails. Fallback to the original template name.
       // But sanitise if by removing unwanted characters and dynamic twig variables.
       return preg_replace('/{.*?\}/m', '', preg_replace('/\\.[^.\\s]{3,4}$/', '', $this->section['template']));
@@ -253,6 +262,10 @@ class TemplateMaker extends Component {
         // Loop through all fields for this tab.
         foreach ($fields as $field) {
 
+          $includeField = false;
+
+          // Custom Field Types ================================================
+
           // If the handle matches a field alias, use a custom template instead
           if (array_key_exists($field['handle'], $this->fieldAliases)) {
 
@@ -264,6 +277,14 @@ class TemplateMaker extends Component {
 
             // Define a sample file path for the field type.
             $sampleFile = Craft::getAlias('@helpers').'/templates/_template-maker/samples/'.$sampleFileName.'.twig';
+
+            if ( in_array($sampleFileName, $this->fieldAliasesToInclude)) {
+
+              $includeField = true;
+
+            }
+
+          // Standard Field Types ==============================================
 
           } elseif (array_key_exists($field['type'], $this->fieldFiles)) {
 
@@ -284,31 +305,47 @@ class TemplateMaker extends Component {
           // If the file exists.
           if (file_exists($sampleFile)) {
 
-            // Get sample file contents.
-            $fieldContent = file_get_contents($sampleFile);
-
             // Comment line for the field name.
             // $layout .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
             $layout .= $this->commentInline($field['name'], $fieldTypeName, 2);
 
-            // TODO: Add tabs on each line:
-            // SEE: https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php
+            if ($includeField) {
 
-            // $separator = "\r\n";
-            // $line = strtok($fieldContent, $separator);
-            //
-            // while ($line !== false) {
-            //     # do something with $line
-            //     $line = strtok( $separator );
-            // }
+              $destination = Craft::getAlias('@templates').'/_components/'.$sampleFileName.'.twig';
 
-            // Replace any instances of the string 'fieldHandle', and replace it
-            // with the relivant fieldHandle.
-            $fieldContent = str_replace('fieldHandle', $field['handle'], $fieldContent);
-            $fieldContent = str_replace('fieldName', $field['name'], $fieldContent);
+              $component = Helpers::$app->request->fileexists($destination);
 
-            // Add modified contents to layout.
-            $layout .= "\n".$tabIndentation.$tabIndentation.$fieldContent;
+              if ( !$component ) {
+                copy($sampleFile, $destination);
+              }
+
+              $layout .= "\n{% include '_components/".$sampleFileName."' ignore missing %}\n";
+
+            } else {
+
+              // Get sample file contents.
+              $fieldContent = file_get_contents($sampleFile);
+
+              // TODO: Add tabs on each line:
+              // SEE: https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php
+
+              // $separator = "\r\n";
+              // $line = strtok($fieldContent, $separator);
+              //
+              // while ($line !== false) {
+              //     # do something with $line
+              //     $line = strtok( $separator );
+              // }
+
+              // Replace any instances of the string 'fieldHandle', and replace it
+              // with the relivant fieldHandle.
+              $fieldContent = str_replace('fieldHandle', $field['handle'], $fieldContent);
+              $fieldContent = str_replace('fieldName', $field['name'], $fieldContent);
+
+              // Add modified contents to layout.
+              $layout .= "\n".$tabIndentation.$tabIndentation.$fieldContent;
+
+            }
           }
 
         }
