@@ -13,74 +13,31 @@ class TemplateMakerController extends Controller {
 
   protected $allowAnonymous = ['template'];
 
-  public function actionTemplateExists() {
-
-    // Extract all post paramaters as variables
-    $data = json_decode(file_get_contents('php://input'));
-    extract((array)$data);
-
-  }
-
   public function actionDefault() {
 
     // Extract all post paramaters as variables
     $data = json_decode(file_get_contents('php://input'));
-    extract((array)$data);
 
     // Default response
     $response = [];
 
-    if(!empty($id)){
+    try{
 
-      try{
+      $response = Helpers::$app->templateMaker->create($data);
+      $response['success'] = true;
 
-        $sectionData = Helpers::$app->query->sectionRouteRules();
-        $fieldsData  = Helpers::$app->query->fields();
+      // Craft::$app->getSession()->setNotice("Template Created");
 
-        $entryType = Entry::find()->typeId($id)->all()[0];
-        $section = $sectionData[array_search($entryType->sectionId, array_column($sectionData, 'id'))];
+    } catch(\Exception $e) {
 
-        $tabs = [];
-        $currentLayout = $entryType->getFieldLayout();
-        $currentTabs = $currentLayout->getTabs();
+      extract((array)$data);
 
-        foreach ($currentTabs as $tab) {
-          $tabFields = $tab->getFields();
-          foreach ($tabFields as $field) {
-            $tabs[$tab->name][] = [
-              'name'   => $field->name   ?? false,
-              'handle' => $field->handle ?? false,
-              'id'     => $field->id     ?? false,
-              'type'   => $fieldsData[array_search($field->id, array_column($fieldsData, 'id'))]['type'] ?? false
-            ];
-          }
-        }
+      $response['error']        = true;
+      $response['message']      = $e->getMessage();
+      $response['templatePath'] = ltrim(rtrim('/'.$path, '/').'/'.$template.$timestamp.'.twig', '/');
 
-        $response['success'] = true;
+      // Craft::$app->session->setError("Failed to create template");
 
-        $creation = Helpers::$app->templateMaker->create([
-          'tabs'      => $tabs ?? false,
-          'id'        => $id,
-          'path'      => $path,
-          'template'  => $template,
-          'timestamp' => $timestamp
-        ]);
-
-        $response = array_merge($response, $creation);
-
-        // Craft::$app->getSession()->setNotice("Template Created");
-
-      } catch(\Exception $e) {
-
-        $templatePath = ltrim(rtrim('/'.$path, '/').'/'.$template.$timestamp.'.twig', '/');
-
-        $response['templatePath'] = $templatePath;
-        $response['error'] = true;
-        $response['message'] = $e->getMessage();
-
-        // Craft::$app->session->setError("Failed to create template");
-
-      }
     }
 
     return $this->asJson($response);

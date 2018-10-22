@@ -32,12 +32,9 @@ class TemplateMaker {
     // Settings
     this.timer            = null;
     this.fileExists       = false;
-    this.id               = options.id;
-    this.path             = options.path;
-    this.template         = options.template;
+    this.defaultTemplate  = options.default;
     this.timestamp        = options.timestamp;
     this.allFiles         = options.allFiles;
-    this.defaultTemplate  = options.template;
 
     // FLD DOM change listener ------------------------------------------------
     // If any FLD elements are moved aroud show a message advising the user
@@ -218,7 +215,6 @@ class TemplateMaker {
 
   submit () {
 
-    // let newTemplate = this.template + '.twig';
     let addTimeStamp = false;
 
     if ( this.fileExists ) {
@@ -233,8 +229,6 @@ class TemplateMaker {
 
         addTimeStamp = true;
 
-        // this.fullTemplatePath = this.fullTemplatePath.replace(newTemplate, newTemplate.replace('.twig', '_' + this.stamp() + '.twig'));
-        // newTemplate = newTemplate.replace('.twig', '_' + this.stamp() + '.twig');
       }
     }
 
@@ -251,10 +245,9 @@ class TemplateMaker {
         'X-Requested-With' : 'fetch'
       }),
       body : JSON.stringify({
-        id        : this.id,
-        path      : this.path,
-        template  : this.template,
-        timestamp : addTimeStamp ? '_'+this.timestamp : '',
+        path        : this.path,
+        template    : this.template,
+        timestamp   : addTimeStamp ? '_'+this.timestamp : '',
       }),
       credentials : 'same-origin',
     })

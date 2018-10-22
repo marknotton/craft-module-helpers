@@ -93,47 +93,45 @@ class TemplateMaker extends Component {
       $this->sections = Helpers::$app->query->sectionRouteRules();
 
       // Globabbly define the current section using the section ID
-      $this->section = $this->sections[$sectionId - 1];
+      $this->section = $this->sections[array_search($sectionId, array_column($this->sections, 'id'))];
 
-      if (!empty($this->section) && !empty($sectionId) && is_numeric($sectionId) ) {
+      // Set the path name and and template name.
+      $path = $this->pathSanitiser();
+      $templateName = $this->templateSantiser();
 
-        // Set the path name and and template name.
-        $path = $this->pathSanitiser();
-        $templateName = $this->templateSantiser();
+      // Set a timestamp to be used as a filename suffix should there be a naming conflict.
+      $timestamp = $this->timestamp();
 
-        // Set a timestamp to be used as a filename suffix should there be a naming conflict.
-        $timestamp = $this->timestamp();
+      // Get a list of all the files that exist in the templates directory.
+      // This will be tested against to instruct users if they are about to
+      // overwrite a existing file.
+      $allFiles = json_encode(Helpers::$app->request->getFileDirectory(null)) ?? [];
 
-        // Get a list of all the files that exist in the templates directory.
-        // This will be tested against to instruct users if they are about to
-        // overwrite a existing file.
-        $allFiles = json_encode(Helpers::$app->request->getFileDirectory(null)) ?? [];
-
-        // It's unlikely the path name and template name will ever be the same.
-        // If this occures, force the template name to '_entry'
-        if ( $path == $templateName ) {
-          $templateName = '_entry';
-        }
-
-        // Define a bunch of data that will passed into the template maker form
-        $settings = [
-          'id'        => $sectionId,
-          'path'      => $path,
-          'template'  => $templateName,
-          'timestamp' => $timestamp,
-          'allFiles'  => $allFiles,
-        ];
-
-        // Render the template-maker form and return the markup.
-        $template = Craft::$app->view->renderTemplate("helpers/_template-maker/form", $settings);
-
-        // Store the template markup as a string in a Javascript variable
-        $templateMakerForm = "var templateMakerForm = '".str_replace(array("\n", "\r"), '', $template)."';";
-
-        // Render the $templateMakerForm variable into the current entry type page.
-        // The 'src/assets/scripts/tempalte-maker.js' will append the form to the bottom of the page.
-        Craft::$app->getView()->registerJs($templateMakerForm, View::POS_HEAD);
+      // It's unlikely the path name and template name will ever be the same.
+      // If this occures, force the template name to '_entry'
+      if ( $path == $templateName ) {
+        $templateName = '_entry';
       }
+
+      // Define a bunch of data that will passed into the template maker form
+      $settings = [
+        'path'        => $path,
+        'template'    => $templateName,
+        'timestamp'   => $timestamp,
+        'allFiles'    => $allFiles,
+      ];
+
+      // Render the template-maker form and return the markup.
+      $template = Craft::$app->view->renderTemplate("helpers/_template-maker/form", $settings);
+
+      // Store the template markup as a string in a Javascript variable
+      $templateMakerForm = "var templateMakerForm = '".str_replace(array("\n", "\r"), '', $template)."';";
+
+      // Render the $templateMakerForm variable into the current entry type page.
+      // The 'src/assets/scripts/tempalte-maker.js' will append the form to the bottom of the page.
+      Craft::$app->getView()->registerJs($templateMakerForm, View::POS_HEAD);
+
+      // $this->create($settings);
     }
   }
 
@@ -205,41 +203,14 @@ class TemplateMaker extends Component {
 
   }
 
-  // ---------------------------------------------------------------------------
-  // Create Template
-  // ---------------------------------------------------------------------------
-
-  public function create() {
-
-    // Extract the settings array into variables
-    extract((array)func_get_args()[0]);
-
-    $path = !empty($path) ? rtrim('/'.$path, '/') : '';
-    $template = $template.$timestamp.'.twig';
-    $templatePath = Craft::getAlias('@templates').$path.'/'.$template;
-
-    $layout = Helpers::$app->request->fileexists(
-      Craft::getAlias('@templates').'/_layouts/generic.twig',              // Look for this file
-      Craft::getAlias('@helpers').'/templates/_template-maker/layout.twig' // Fallback to this one.
-    );
-
-    // Get contents of a generic template.
-    $layout = file_get_contents($layout);
-
-    // If path is a directory, recursively generate the the folder structure.
-    if (!empty($path) && !is_dir(Craft::getAlias('@templates').'/'.$path)) {
-      mkdir(Craft::getAlias('@templates').'/'.$path, 0777, true);
-    }
+  private function generator() {
 
     // Tab indentation count
     // $tabIndentationCount = 1;
     $tabIndentation = str_repeat("\t", 1);
 
-    // Create a new file.
-    $newTemplate = fopen($templatePath, 'w') or die('Cannot open file:  '.$templatePath);
-
     // Loop through all tabs.
-    foreach ($tabs as $tab => $fields) {
+    foreach ($this->getTabData() as $tab => $fields) {
 
       // Kebabify the key name for use as an element tag.
       $element = StringHelper::toKebabCase($tab);
@@ -359,15 +330,6 @@ class TemplateMaker extends Component {
     // Write template file.
     fwrite($newTemplate, $layout);
 
-    return [
-      'id'                 => $id,
-      'path'               => ltrim($path, '/'),
-      'template'           => $template,
-      'templateSystemPath' => $templatePath,
-      'templatePath'       => ltrim(str_replace(Craft::getAlias('@templates'), '', $templatePath), '/'),
-      'newTimestamp'       => $this->timestamp()
-    ];
-
   }
 
   private function commentInline($heading, $suffix = null, $tabs = 1, $seperator = "-") {
@@ -378,7 +340,7 @@ class TemplateMaker extends Component {
     $seperatorLength = ($maxLength - $totalLength) < 0 ? 5 : ($maxLength - $totalLength);
     $seperators      = str_repeat($seperator, $seperatorLength);
     $tabs            = str_repeat("\t", $tabs);
-    $comment         = "\n".$tabs."{# ".$heading." ".$seperators.$suffix." #}\n";
+    $comment         = $tabs."{# ".$heading." ".$seperators.$suffix." #}\n\n";
 
     return $comment;
   }
@@ -393,11 +355,91 @@ class TemplateMaker extends Component {
     $tabs            = str_repeat("\t", $tabs);
     $seperators1      = str_repeat($seperator, $maxLength);
     $seperators2      = str_repeat(' ', $seperatorLength);
-    $comment         = "\n".$tabs."{# ".$seperators1." #}";
+    $comment         = $tabs."{# ".$seperators1." #}";
     $comment        .= "\n".$tabs."{# ".$heading." ".$seperators2.$suffix." #}";
-    $comment        .= "\n".$tabs."{# ".$seperators1." #}\n";
+    $comment        .= "\n".$tabs."{# ".$seperators1." #}\n\n";
 
     return $comment;
+
+  }
+
+  // ===========================================================================
+  // Create Template
+  // ===========================================================================
+
+  public function create($data) {
+
+    // Extract the settings array into variables
+    extract((array)$data);
+
+    // Path and files names ====================================================
+
+    $path = !empty($path) ? rtrim('/'.$path, '/') : '';
+    $template = $template.$timestamp.'.twig';
+    $templatePath = Craft::getAlias('@templates').$path.'/'.$template;
+
+    // Get field & tab data ====================================================
+
+    // Get all field type data
+    $allFields = Helpers::$app->query->fields();
+
+    // Get the entryType ID from the last parameter in the URL
+    $entryTypeId = $this->segments[array_search('entrytypes', $this->segments) + 1];
+
+    // Use the section routes ID to query all real sections by ID and grab it's entry types
+    $section = (array)Craft::$app->getSections()->getSectionById($this->section['id'])->getEntryTypes();
+
+    // With the entry type ID, search for the section for the correct entry type object.
+    $entryType = $section[array_search($entryTypeId, array_column($section, 'id'))];
+
+    // Get all tabs for this entry type
+    $allTabs = $entryType->getFieldLayout()->getTabs();
+
+    // Loop all fields within all tabs and create a clean array of useful data.
+    foreach ($allTabs as $tab) {
+      $fields = $tab->getFields();
+      foreach ($fields as $field) {
+        $tabData[$tab->name][] = [
+          'name'   => $field->name   ?? false,
+          'handle' => $field->handle ?? false,
+          'id'     => $field->id     ?? false,
+          'type'   => $allFields[array_search($field->id, array_column($allFields, 'id'))]['type'] ?? false
+        ];
+      }
+    }
+
+    // Create Paths ============================================================
+
+    // If path is a directory, recursively generate the folder structure.
+    if (!empty($path) && !is_dir(Craft::getAlias('@templates').'/'.$path)) {
+      mkdir(Craft::getAlias('@templates').'/'.$path, 0777, true);
+    }
+
+    // Open a new file.
+    $newTemplate = fopen($templatePath, 'w') or die('Cannot open file:  '.$templatePath);
+
+    // Templating Markup =======================================================
+
+    $markup = $this->commentHeader('Page Name', null, 0, "/");
+
+    // Loop through all tabs.
+    foreach ($tabData as $tab => $fields) {
+
+    }
+
+    // Write file ============================================================
+
+    fwrite($newTemplate, $markup);
+
+    // Data to pass back to the user ===========================================
+
+    return [
+      'path'               => ltrim($path, '/'),
+      'template'           => $template,
+      'templateSystemPath' => $templatePath,
+      'templatePath'       => ltrim(str_replace(Craft::getAlias('@templates'), '', $templatePath), '/'),
+      'newTimestamp'       => $this->timestamp()
+    ];
 
   }
 
