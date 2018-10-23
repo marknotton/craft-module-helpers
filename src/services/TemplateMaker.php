@@ -37,7 +37,8 @@ class TemplateMaker extends Component {
   // If field has a specific handle, refer to sample file by reference
   private $fieldAliases = [
     'featuredImage' => 'featured-image',
-    'contentBlocks' => 'content-blocks'
+    'contentBlocks' => 'content-blocks',
+    'telephone'     => 'telephone'
   ];
 
   // Field Aliases To Include
@@ -128,12 +129,8 @@ class TemplateMaker extends Component {
       // Render the template-maker form and return the markup.
       $template = Craft::$app->view->renderTemplate("helpers/_template-maker/form", $settings);
 
-      // Store the template markup as a string in a Javascript variable
-      $templateMakerForm = "var templateMakerForm = '".str_replace(array("\n", "\r"), '', $template)."';";
-
-      // Render the $templateMakerForm variable into the current entry type page.
-      // The 'src/assets/scripts/tempalte-maker.js' will append the form to the bottom of the page.
-      Craft::$app->getView()->registerJs($templateMakerForm, View::POS_HEAD);
+      // Render the templateMakerForm variable as a JS variable.
+      Craft::$app->view->registerJsVar('templateMakerForm', str_replace(array("\n", "\r"), '', $template));
 
       $settings['timestamp'] = '';
       $this->create($settings);
@@ -266,8 +263,7 @@ class TemplateMaker extends Component {
             // Or target a sample field file where it's content will be used intead.
             switch ($fieldFileName) {
               case "Redactor":
-                $fieldContent = "<H1>HELLO</H1>";
-                // $fieldFile = $this->redactor($field, $settings);
+                $fieldFile = $this->redactor($field, $settings);
               break;
               default:
                 $fieldFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$fieldFileName.'.twig';
@@ -317,8 +313,8 @@ class TemplateMaker extends Component {
 
               // Replace any instances of the string 'fieldHandle', and replace it
               // with the relivant fieldHandle.
-              $fieldContent = str_replace('fieldHandle', $field['handle'], $fieldContent);
-              $fieldContent = str_replace('fieldName', $field['name'], $fieldContent);
+              $fieldContent = str_replace('<FieldHandle>', $field['handle'], $fieldContent);
+              $fieldContent = str_replace('<FieldName>', $field['name'], $fieldContent);
 
               // Add modified contents to layout.
               $markup .= "\n".$fieldContent;
@@ -449,8 +445,8 @@ class TemplateMaker extends Component {
     $seperatorLength = ($maxLength - $totalLength) < 0 ? 5 : ($maxLength - $totalLength);
     $seperators      = str_repeat($seperator, $seperatorLength);
     $tabs            = str_repeat("\t", $tabs);
-    $seperators1      = str_repeat($seperator, $maxLength);
-    $seperators2      = str_repeat(' ', $seperatorLength);
+    $seperators1     = str_repeat($seperator, $maxLength);
+    $seperators2     = str_repeat(' ', $seperatorLength);
     $comment         = $tabs."{# ".$seperators1." #}";
     $comment        .= "\n".$tabs."{# ".$heading." ".$seperators2.$suffix." #}";
     $comment        .= "\n".$tabs."{# ".$seperators1." #}\n\n";
@@ -465,9 +461,22 @@ class TemplateMaker extends Component {
 
   private function redactor($field, $settings) {
 
-    // TODO: IF redactor has congfig redactorConfig setting, find that file and
-    // query it. If it has buttons, and buttons has 'image', then return a different
-    // redactor twig file that includes functions
+    /*
+    If the config file allows for images (within the buttons array),
+    then refer to a specialised Redactor sample file that includes the
+    image transform filter. This transforms images within Redacotor field to
+    avoid oversize images being rendered in the fontend...
+    */
+
+    $path = Craft::$app->getPath()->getConfigPath().DIRECTORY_SEPARATOR.'redactor'.DIRECTORY_SEPARATOR.($settings->redactorConfig ?? '');
+
+    $config = json_decode(file_get_contents($path) ?? false);
+
+    if ( ($config->buttons ?? false) && in_array("image", $config->buttons)) {
+      return Craft::getAlias('@helpers').'/templates/_template-maker/fields/Redactor_Images.twig';
+    }
+
+    // Otherwise, just return the standard Redactor sample file.
 
     return Craft::getAlias('@helpers').'/templates/_template-maker/fields/Redactor.twig';
   }

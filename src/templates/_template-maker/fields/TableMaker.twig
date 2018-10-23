@@ -1,13 +1,13 @@
-{% set fieldHandle = entry.fieldHandle ?? false %}
+{% set <FieldHandle> = entry.<FieldHandle> %}
 
-{% if table %}
+{% if <FieldHandle> is not empty %}
 
-  {% set columns = fieldHandle.columns %}
-  {% set rows    = fieldHandle.rows %}
+  {% set columns = <FieldHandle>.columns %}
+  {% set rows    = <FieldHandle>.rows %}
 
-  <table class="stylised">
+  <table class="<FieldHandle> stylised">
 
-    <caption>Table</caption>
+    <caption><FieldName></caption>
 
     <thead>
       <tr>

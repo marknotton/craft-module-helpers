@@ -227,17 +227,17 @@ class Queries extends Component {
     // TODO: Make the include of entry type data optional. $includeTypes
     // TODO: Get entry type data via mySQL command, not this faff...
     // $allSections = Craft::$app->getSections()->getAllSections();
-    foreach ($results as $key => $section) {
-      $entrytypes = Craft::$app->getSections()->getSectionById($section['id'])->getEntryTypes();
-      foreach ($entrytypes as &$entrytype) {
-        $results[$key]['entrytypes'][] = [
-          'id'     => $entrytype->id,
-          'name'   => $entrytype->name,
-          'handle' => $entrytype->handle,
-          'title'  => $entrytype->hasTitleField ? $entrytype->titleLabel : false
-        ];
-      }
-    };
+    // foreach ($results as $key => $section) {
+    //   $entrytypes = Craft::$app->getSections()->getSectionById($section['id'])->getEntryTypes();
+    //   foreach ($entrytypes as &$entrytype) {
+    //     $results[$key]['entrytypes'][] = [
+    //       'id'     => $entrytype->id,
+    //       'name'   => $entrytype->name,
+    //       'handle' => $entrytype->handle,
+    //       'title'  => $entrytype->hasTitleField ? $entrytype->titleLabel : false
+    //     ];
+    //   }
+    // };
 
     return $results;
 

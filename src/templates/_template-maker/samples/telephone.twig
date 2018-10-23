@@ -1,0 +1,5 @@
+{% set <FieldHandle> = entry.<FieldHandle> %}
+
+{% if <FieldHandle> is not empty %}
+  <a href="tel:{{ <FieldHandle>|replace({' ':'', '(0)': ''}) }}" aria-label="{{ 'C042'|t }}">{{ <FieldHandle> }}</a>
+{% endif %}
