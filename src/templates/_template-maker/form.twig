@@ -57,9 +57,11 @@
 
 	{% js at head %}
 		var templateMakerOptions = {
-		  default   : "{{ template }}",
-			timestamp : "{{ timestamp }}",
-			allFiles  : JSON.parse('{{ allFiles|raw }}')
+		  sectionId   : "{{ sectionId }}",
+		  entryTypeId : "{{ entryTypeId }}",
+		  default     : "{{ template }}",
+			timestamp   : "{{ timestamp }}",
+			allFiles    : JSON.parse('{{ allFiles|raw }}')
 		}
 	{% endjs %}
 

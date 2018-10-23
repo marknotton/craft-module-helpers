@@ -90,7 +90,7 @@ class Queries extends Component {
 
     extract($this->routeOptions(func_get_args()));
 
-    $sql = "SELECT id, name, handle, type FROM ".$this->prefix."fields ";
+    $sql = "SELECT id, name, handle, type, settings FROM ".$this->prefix."fields ";
     $sql .= "ORDER by id" ;
 
     $command = Craft::$app->db->createCommand($sql);

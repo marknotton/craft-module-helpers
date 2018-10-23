@@ -19,6 +19,9 @@ class TemplateMaker extends Component {
   private $sections;
   private $segments;
   private $section;
+  private $entryType;
+  private $entryTypes;
+  private $sectionSettings;
   private $tabLength = 2;
 
   // Exclude these tabs from being generated.
@@ -34,7 +37,6 @@ class TemplateMaker extends Component {
   // If field has a specific handle, refer to sample file by reference
   private $fieldAliases = [
     'featuredImage' => 'featured-image',
-    'body'          => 'body',
     'contentBlocks' => 'content-blocks'
   ];
 
@@ -74,9 +76,9 @@ class TemplateMaker extends Component {
     'supercool\tablemaker\fields\TableMakerField' => 'TableMaker'
   ];
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // Init
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
 
   public function init() {
 
@@ -89,18 +91,18 @@ class TemplateMaker extends Component {
       // Grab the section ID from the URL. It's the third from the end segment item.
       $sectionId = $this->segments[array_search('entrytypes', $this->segments) - 1];
 
-      // Globally define all sections using Helpers route rules method
-      $this->sections = Helpers::$app->query->sectionRouteRules();
+      // Get the entryType ID from the last parameter in the URL
+      $entryTypeId = $this->segments[array_search('entrytypes', $this->segments) + 1];
 
-      // Globabbly define the current section using the section ID
-      $this->section = $this->sections[array_search($sectionId, array_column($this->sections, 'id'))];
+      // Set the Section and Entry type data
+      $this->setSectionAndEntrytype($sectionId, $entryTypeId);
 
       // Set the path name and and template name.
       $path = $this->pathSanitiser();
       $templateName = $this->templateSantiser();
 
       // Set a timestamp to be used as a filename suffix should there be a naming conflict.
-      $timestamp = $this->timestamp();
+      $timestamp = time();
 
       // Get a list of all the files that exist in the templates directory.
       // This will be tested against to instruct users if they are about to
@@ -115,6 +117,8 @@ class TemplateMaker extends Component {
 
       // Define a bunch of data that will passed into the template maker form
       $settings = [
+        'sectionId'   => $sectionId,
+        'entryTypeId' => $entryTypeId,
         'path'        => $path,
         'template'    => $templateName,
         'timestamp'   => $timestamp,
@@ -131,86 +135,71 @@ class TemplateMaker extends Component {
       // The 'src/assets/scripts/tempalte-maker.js' will append the form to the bottom of the page.
       Craft::$app->getView()->registerJs($templateMakerForm, View::POS_HEAD);
 
-      // $this->create($settings);
+      $settings['timestamp'] = '';
+      $this->create($settings);
     }
   }
 
-  public function timestamp() {
-    return time();
-  }
+  // ===========================================================================
+  // Create Template
+  // ===========================================================================
 
-  // ---------------------------------------------------------------------------
-  // Path Sanitiser
-  // ---------------------------------------------------------------------------
+  public function create($data) {
 
-  private function pathSanitiser() {
+    // Extract the settings array into variables
+    extract((array)$data);
 
-    // Using the original URI Format for this section, clean up path
-    // by removing any dynamic twig variables and Kebabifing the path.
-    $path = StringHelper::toKebabCase(trim(preg_replace('/{.*?\}/m', '', $this->section['uriFormat']),'/').'/' ?? '');
+    // Path and files names ====================================================
 
-    // Variations of 'home' page paths should be ignored. As this template
-    // typically exists in the templates root directory.
-    if ( !in_array($path, ["home", "homepage"]) ) {
-      return $path;
+    $path = !empty($path) ? rtrim('/'.$path, '/') : '';
+    $template = $template.$timestamp.'.twig';
+    $templatePath = Craft::getAlias('@templates').$path.'/'.$template;
+
+    // Set the Section and Entry type data
+    if (empty($this->section) || empty($this->entryType)) {
+
+      $this->setSectionAndEntrytype($sectionId, $entryTypeId);
     }
-  }
 
-  // ---------------------------------------------------------------------------
-  // Template Name Sanitiser
-  // ---------------------------------------------------------------------------
+    // Get field & tab data ====================================================
 
-  private function templateSantiser() {
+    // Get all field type data
+    $allFields = Helpers::$app->query->fields();
 
-    // If there is more than one entry type associated to the current section...
-    if ( count($this->section['entrytypes']) > 1 ) {
+    // Get all tabs for this entry type
+    $allTabs = $this->entryType->getFieldLayout()->getTabs();
 
-      // Grab the entrytype ID from the URL. It's the last segment item.
-      $entryTypeId = end($this->segments);
-
-      // Find the index/key of the entrytypes that matches the current page
-      $entryTypeIdex = array_search($entryTypeId, array_column($this->section['entrytypes'], 'id'));
-
-      // Define the appropriate entry type data
-      $entryType = $this->section['entrytypes'][$entryTypeIdex];
-
-      // Return the entrytype handle
-      return $entryType['handle'];
-
-    } elseif ( $this->section['template'] == '_loader' || $this->section['template'] == '_loader.twig' ) {
-      // If a variants of the _loader or _loader.twig was used in the section template,
-
-      // Then check on the section type to determine a filename name default
-      if ( $this->section['type'] == 'channel' || $this->section['type'] == 'structure' ) {
-
-        // _entry for channels or structures
-        return '_entry';
-
-      } else {
-
-        // Or index for everything else
-        return 'index';
-
+    // Loop all fields within all tabs and create a clean array of useful data.
+    foreach ($allTabs as $tab) {
+      $fields = $tab->getFields();
+      foreach ($fields as $field) {
+        $fieldData = $allFields[array_search($field->id, array_column($allFields, 'id'))];
+        $tabData[$tab->name][] = [
+          'name'     => $field->name   ?? false,
+          'handle'   => $field->handle ?? false,
+          'id'       => $field->id     ?? false,
+          'type'     => $fieldData['type'] ?? false,
+          'settings' => $fieldData['settings'] ?? false
+        ];
       }
-
-    } else {
-
-      // Lastly if all else fails. Fallback to the original template name.
-      // But sanitise if by removing unwanted characters and dynamic twig variables.
-      return StringHelper::toKebabCase(preg_replace('/{.*?\}/m', '', $this->section['template']));
-
     }
 
-  }
+    // Create Paths ============================================================
 
-  private function generator() {
+    // If path is a directory, recursively generate the folder structure.
+    if (!empty($path) && !is_dir(Craft::getAlias('@templates').'/'.$path)) {
+      mkdir(Craft::getAlias('@templates').'/'.$path, 0777, true);
+    }
 
-    // Tab indentation count
-    // $tabIndentationCount = 1;
-    $tabIndentation = str_repeat("\t", 1);
+    // Open a new file.
+    $newTemplate = fopen($templatePath, 'w') or die('Cannot open file:  '.$templatePath);
+
+    // Templating Markup =======================================================
+
+    $markup = $this->commentHeader($this->entryType->name, null, 0, "/");
 
     // Loop through all tabs.
-    foreach ($this->getTabData() as $tab => $fields) {
+    foreach ($tabData as $tab => $fields) {
 
       // Kebabify the key name for use as an element tag.
       $element = StringHelper::toKebabCase($tab);
@@ -225,15 +214,18 @@ class TemplateMaker extends Component {
         }
 
         // Comment line for the tab name.
-        $layout .= $this->commentHeader($tab.' Tab');
+        $markup .= $this->commentHeader($tab.' Tab');
 
         // Tab open element.
-        $layout .= "\n".$tabIndentation."<".$element.">\n";
+        $markup .= "\n"."<".$element.">\n";
 
         // Loop through all fields for this tab.
         foreach ($fields as $field) {
 
           $includeField = false;
+
+          // Get field settings;
+          $settings = json_decode($field['settings']);
 
           // Custom Field Types ================================================
 
@@ -241,15 +233,15 @@ class TemplateMaker extends Component {
           if (array_key_exists($field['handle'], $this->fieldAliases)) {
 
             // If the field handle exists in the list field aliases array set the the associated filename
-            $sampleFileName = $this->fieldAliases[$field['handle']];
+            $fieldFileName = $this->fieldAliases[$field['handle']];
 
-            // Use the $sampleFileName to set a field type name to be used in the generated documentation.
-            $fieldTypeName = array_key_exists($field['type'], $this->fieldFiles) ? $this->fieldFiles[$field['type']] : $sampleFileName;
+            // Use the $fieldFileName to set a field type name to be used in the generated documentation.
+            $fieldTypeName = array_key_exists($field['type'], $this->fieldFiles) ? $this->fieldFiles[$field['type']] : $fieldFileName;
 
             // Define a sample file path for the field type.
-            $sampleFile = Craft::getAlias('@helpers').'/templates/_template-maker/samples/'.$sampleFileName.'.twig';
+            $fieldFile = Craft::getAlias('@helpers').'/templates/_template-maker/samples/'.$fieldFileName.'.twig';
 
-            if ( in_array($sampleFileName, $this->fieldAliasesToInclude)) {
+            if ( in_array($fieldFileName, $this->fieldAliasesToInclude)) {
 
               $includeField = true;
 
@@ -260,13 +252,26 @@ class TemplateMaker extends Component {
           } elseif (array_key_exists($field['type'], $this->fieldFiles)) {
 
             // If the field type exists in the list field files array set the the associated filename
-            $sampleFileName = $this->fieldFiles[$field['type']];
+            $fieldFileName = $this->fieldFiles[$field['type']];
 
-            // Use the $sampleFileName to set a field type name to be used in the generated documentation.
-            $fieldTypeName = $sampleFileName;
+            // Use the $fieldFileName to set a field type name to be used in the generated documentation.
+            $fieldTypeName = $fieldFileName;
 
-            // Define a sample file path for the field type.
-            $sampleFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$sampleFileName.'.twig';
+            // Predefine content and file variables for the next bit...
+            $fieldContent = false;
+            $fieldFile    = false;
+
+            // Change the way fields are handled if they required special rules.
+            // Fields can return strings (preferably as HTML) to be rendered as markup.
+            // Or target a sample field file where it's content will be used intead.
+            switch ($fieldFileName) {
+              case "Redactor":
+                $fieldContent = "<H1>HELLO</H1>";
+                // $fieldFile = $this->redactor($field, $settings);
+              break;
+              default:
+                $fieldFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$fieldFileName.'.twig';
+            }
 
           }
 
@@ -274,28 +279,30 @@ class TemplateMaker extends Component {
           $fieldTypeName = preg_replace('/([a-z])([A-Z])/s','$1 $2', $fieldTypeName);
 
           // If the file exists.
-          if (file_exists($sampleFile)) {
+          if ( !empty($fieldContent) || !empty($fieldFile) && file_exists($fieldFile)) {
 
             // Comment line for the field name.
-            // $layout .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
-            $layout .= $this->commentInline($field['name'], $fieldTypeName, 2);
+            // $markup .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
+            $markup .= $this->commentInline($field['name'], $fieldTypeName, 2);
 
             if ($includeField) {
 
-              $destination = Craft::getAlias('@templates').'/_components/'.$sampleFileName.'.twig';
+              $destination = Craft::getAlias('@templates').'/_components/'.$fieldFileName.'.twig';
 
               $component = Helpers::$app->request->fileexists($destination);
 
               if ( !$component ) {
-                copy($sampleFile, $destination);
+                copy($fieldFile, $destination);
               }
 
-              $layout .= "\n{% include '_components/".$sampleFileName."' %}\n";
+              $markup .= "\n{% include '_components/".$fieldFileName."' %}\n";
 
             } else {
 
               // Get sample file contents.
-              $fieldContent = file_get_contents($sampleFile);
+              if ( empty($fieldContent) ) {
+                $fieldContent = file_get_contents($fieldFile);
+              }
 
               // TODO: Add tabs on each line:
               // SEE: https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php
@@ -314,7 +321,7 @@ class TemplateMaker extends Component {
               $fieldContent = str_replace('fieldName', $field['name'], $fieldContent);
 
               // Add modified contents to layout.
-              $layout .= "\n".$tabIndentation.$tabIndentation.$fieldContent;
+              $markup .= "\n".$fieldContent;
 
             }
           }
@@ -322,15 +329,104 @@ class TemplateMaker extends Component {
         }
 
         // Tab close element.
-        $layout .= "\n".$tabIndentation."</".$element.">\n";
+        $markup .= "\n</".$element.">\n";
       }
 
     }
 
-    // Write template file.
-    fwrite($newTemplate, $layout);
+    // Write file ============================================================
+
+    fwrite($newTemplate, $markup);
+
+    // Data to pass back to the user ===========================================
+
+    return [
+      'path'               => ltrim($path, '/'),
+      'template'           => $template,
+      'templateSystemPath' => $templatePath,
+      'templatePath'       => ltrim(str_replace(Craft::getAlias('@templates'), '', $templatePath), '/'),
+      'newTimestamp'       => time()
+    ];
 
   }
+
+  // ---------------------------------------------------------------------------
+  // Set the Section and Entry type data
+  // ---------------------------------------------------------------------------
+
+  private function setSectionAndEntrytype($sectionId, $entryTypeId) {
+
+    // Globabbly define the current section using the section ID
+    $this->section = Craft::$app->getSections()->getSectionById($sectionId);
+
+    // globally define the section settings which contains data like the URI Format
+    $this->sectionSettings = $this->section->getSiteSettings()[1];
+
+    // Globally define all available entry types for the section
+    $this->entryTypes = $this->section->getEntryTypes();
+
+    // Pick out the entry type relevant for this page and define it globally.
+    $this->entryType = $this->entryTypes[array_search($entryTypeId, array_column($this->entryTypes, 'id'))];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Path Sanitiser
+  // ---------------------------------------------------------------------------
+
+  private function pathSanitiser() {
+
+    // Using the original URI Format for this section, clean up path
+    // by removing any dynamic twig variables and Kebabifing the path.
+    $path = StringHelper::toKebabCase(trim(preg_replace('/{.*?\}/m', '', $this->sectionSettings->uriFormat),'/').'/' ?? '');
+
+    // Variations of 'home' page paths should be ignored. As this template
+    // typically exists in the templates root directory.
+    if ( !in_array($path, ["home", "homepage"]) ) {
+      return $path;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Template Name Sanitiser
+  // ---------------------------------------------------------------------------
+
+  private function templateSantiser() {
+
+    // If there is more than one entry type associated to the current section...
+    if ( count($this->entryTypes) > 1 ) {
+
+      // Return the entrytype handle
+      return $this->entryType['handle'];
+
+    } elseif ( $this->sectionSettings->template == '_loader' || $this->sectionSettings->template == '_loader.twig' ) {
+      // If a variants of the _loader or _loader.twig was used in the section template,
+
+      // Then check on the section type to determine a filename name default
+      if ( $this->section->type == 'channel' || $this->section->type == 'structure' ) {
+
+        // _entry for channels or structures
+        return '_entry';
+
+      } else {
+
+        // Or index for everything else
+        return 'index';
+
+      }
+
+    } else {
+
+      // Lastly if all else fails. Fallback to the original template name.
+      // But sanitise if by removing unwanted characters and dynamic twig variables.
+      return StringHelper::toKebabCase(preg_replace('/{.*?\}/m', '', $this->sectionSettings->template));
+
+    }
+
+  }
+
+  // ---------------------------------------------------------------------------
+  // Commenting markup
+  // ---------------------------------------------------------------------------
 
   private function commentInline($heading, $suffix = null, $tabs = 1, $seperator = "-") {
 
@@ -364,83 +460,16 @@ class TemplateMaker extends Component {
   }
 
   // ===========================================================================
-  // Create Template
+  // Special rules for specific field types
   // ===========================================================================
 
-  public function create($data) {
+  private function redactor($field, $settings) {
 
-    // Extract the settings array into variables
-    extract((array)$data);
+    // TODO: IF redactor has congfig redactorConfig setting, find that file and
+    // query it. If it has buttons, and buttons has 'image', then return a different
+    // redactor twig file that includes functions
 
-    // Path and files names ====================================================
-
-    $path = !empty($path) ? rtrim('/'.$path, '/') : '';
-    $template = $template.$timestamp.'.twig';
-    $templatePath = Craft::getAlias('@templates').$path.'/'.$template;
-
-    // Get field & tab data ====================================================
-
-    // Get all field type data
-    $allFields = Helpers::$app->query->fields();
-
-    // Get the entryType ID from the last parameter in the URL
-    $entryTypeId = $this->segments[array_search('entrytypes', $this->segments) + 1];
-
-    // Use the section routes ID to query all real sections by ID and grab it's entry types
-    $section = (array)Craft::$app->getSections()->getSectionById($this->section['id'])->getEntryTypes();
-
-    // With the entry type ID, search for the section for the correct entry type object.
-    $entryType = $section[array_search($entryTypeId, array_column($section, 'id'))];
-
-    // Get all tabs for this entry type
-    $allTabs = $entryType->getFieldLayout()->getTabs();
-
-    // Loop all fields within all tabs and create a clean array of useful data.
-    foreach ($allTabs as $tab) {
-      $fields = $tab->getFields();
-      foreach ($fields as $field) {
-        $tabData[$tab->name][] = [
-          'name'   => $field->name   ?? false,
-          'handle' => $field->handle ?? false,
-          'id'     => $field->id     ?? false,
-          'type'   => $allFields[array_search($field->id, array_column($allFields, 'id'))]['type'] ?? false
-        ];
-      }
-    }
-
-    // Create Paths ============================================================
-
-    // If path is a directory, recursively generate the folder structure.
-    if (!empty($path) && !is_dir(Craft::getAlias('@templates').'/'.$path)) {
-      mkdir(Craft::getAlias('@templates').'/'.$path, 0777, true);
-    }
-
-    // Open a new file.
-    $newTemplate = fopen($templatePath, 'w') or die('Cannot open file:  '.$templatePath);
-
-    // Templating Markup =======================================================
-
-    $markup = $this->commentHeader('Page Name', null, 0, "/");
-
-    // Loop through all tabs.
-    foreach ($tabData as $tab => $fields) {
-
-    }
-
-    // Write file ============================================================
-
-    fwrite($newTemplate, $markup);
-
-    // Data to pass back to the user ===========================================
-
-    return [
-      'path'               => ltrim($path, '/'),
-      'template'           => $template,
-      'templateSystemPath' => $templatePath,
-      'templatePath'       => ltrim(str_replace(Craft::getAlias('@templates'), '', $templatePath), '/'),
-      'newTimestamp'       => $this->timestamp()
-    ];
-
+    return Craft::getAlias('@helpers').'/templates/_template-maker/fields/Redactor.twig';
   }
 
 }

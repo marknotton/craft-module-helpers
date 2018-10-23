@@ -32,6 +32,8 @@ class TemplateMaker {
     // Settings
     this.timer            = null;
     this.fileExists       = false;
+    this.sectionId        = options.sectionId;
+    this.entryTypeId      = options.entryTypeId;
     this.defaultTemplate  = options.default;
     this.timestamp        = options.timestamp;
     this.allFiles         = options.allFiles;
@@ -245,6 +247,8 @@ class TemplateMaker {
         'X-Requested-With' : 'fetch'
       }),
       body : JSON.stringify({
+        sectionId   : this.sectionId,
+        entryTypeId : this.entryTypeId,
         path        : this.path,
         template    : this.template,
         timestamp   : addTimeStamp ? '_'+this.timestamp : '',
