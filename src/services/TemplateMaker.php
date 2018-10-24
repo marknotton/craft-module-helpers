@@ -195,8 +195,34 @@ class TemplateMaker extends Component {
 
     $markup = $this->commentHeader($this->entryType->name, '#'.$this->entryType->handle, 0, "/");
 
+    $markup .= $this->getFieldData($tabData);
+
+    // Write file ============================================================
+
+    fwrite($newTemplate, $markup);
+
+    // Data to pass back to the user ===========================================
+
+    return [
+      'path'               => ltrim($path, '/'),
+      'template'           => $template,
+      'templateSystemPath' => $templatePath,
+      'templatePath'       => ltrim(str_replace(Craft::getAlias('@templates'), '', $templatePath), '/'),
+      'newTimestamp'       => time()
+    ];
+
+  }
+
+  // ---
+  // Get Field Type Data
+  // --
+
+  private function getFieldData($tabs) {
+
+    $markup = "";
+
     // Loop through all tabs.
-    foreach ($tabData as $tab => $fields) {
+    foreach ($tabs as $tab => $fields) {
 
       // Kebabify the key name for use as an element tag.
       $element = StringHelper::toKebabCase($tab);
@@ -264,6 +290,9 @@ class TemplateMaker extends Component {
             switch ($fieldFileName) {
               case "Redactor":
                 $fieldFile = $this->redactor($field, $settings);
+              break;
+              case "Matrix":
+                $fieldFile = $this->matrix($field, $settings);
               break;
               default:
                 $fieldFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$fieldFileName.'.twig';
@@ -334,21 +363,10 @@ class TemplateMaker extends Component {
 
     }
 
-    // Write file ============================================================
-
-    fwrite($newTemplate, $markup);
-
-    // Data to pass back to the user ===========================================
-
-    return [
-      'path'               => ltrim($path, '/'),
-      'template'           => $template,
-      'templateSystemPath' => $templatePath,
-      'templatePath'       => ltrim(str_replace(Craft::getAlias('@templates'), '', $templatePath), '/'),
-      'newTimestamp'       => time()
-    ];
+    return $markup;
 
   }
+
 
   // ---------------------------------------------------------------------------
   // Set the Section and Entry type data
@@ -483,6 +501,12 @@ class TemplateMaker extends Component {
     // Otherwise, just return the standard Redactor sample file.
 
     return Craft::getAlias('@helpers').'/templates/_template-maker/fields/Redactor.twig';
+  }
+
+  private function matrix($field) {
+
+    return "";
+
   }
 
 }
