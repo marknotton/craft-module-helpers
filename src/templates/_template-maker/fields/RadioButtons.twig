@@ -4,7 +4,7 @@
 
   <h3><FieldName></h3>
 
-  <ul class="<FieldHandle>">
+  <ul class="<FieldClass>">
     {% for option in <FieldHandle>.options %}
       <li {{ option.selected ? 'selected '}}data-value="{{ option.value }}">{{ option }}</li>
     {% endfor %}

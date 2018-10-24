@@ -4,10 +4,10 @@
 
   <h3><FieldName></h3>
 
-  <ul class="<FieldHandle>">
+  <ul class="<FieldClass>">
     {% for rel in <FieldHandle> %}
       <li><a href="/{{ rel.uri }}">{{ rel.filename }}</a></li>
     {% endfor %}
   </ul>
-  
+
 {% endif %}

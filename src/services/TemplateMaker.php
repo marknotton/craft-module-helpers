@@ -193,7 +193,7 @@ class TemplateMaker extends Component {
 
     // Templating Markup =======================================================
 
-    $markup = $this->commentHeader($this->entryType->name, null, 0, "/");
+    $markup = $this->commentHeader($this->entryType->name, '#'.$this->entryType->handle, 0, "/");
 
     // Loop through all tabs.
     foreach ($tabData as $tab => $fields) {
@@ -279,7 +279,7 @@ class TemplateMaker extends Component {
 
             // Comment line for the field name.
             // $markup .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
-            $markup .= $this->commentInline($field['name'], $fieldTypeName, 2);
+            $markup .= $this->commentInline($field['name'], $fieldTypeName);
 
             if ($includeField) {
 
@@ -313,8 +313,12 @@ class TemplateMaker extends Component {
 
               // Replace any instances of the string 'fieldHandle', and replace it
               // with the relivant fieldHandle.
-              $fieldContent = str_replace('<FieldHandle>', $field['handle'], $fieldContent);
-              $fieldContent = str_replace('<FieldName>', $field['name'], $fieldContent);
+
+
+              $find    = ["<FieldHandle>", "<FieldName>", "<FieldClass>"];
+              $replace = [$field['handle'], $field['name'], StringHelper::toKebabCase($field['handle'])];
+
+              $fieldContent = str_replace($find, $replace, $fieldContent);
 
               // Add modified contents to layout.
               $markup .= "\n".$fieldContent;
@@ -424,20 +428,20 @@ class TemplateMaker extends Component {
   // Commenting markup
   // ---------------------------------------------------------------------------
 
-  private function commentInline($heading, $suffix = null, $tabs = 1, $seperator = "-") {
+  private function commentInline($heading, $suffix = null, $tabs = 0, $seperator = "-") {
 
     $maxLength       = 80;
     $suffix          = !empty($suffix) ? ' ['.$suffix.']' : '';
     $totalLength     = strlen($heading) + strlen($suffix) + ($tabs*$this->tabLength);
     $seperatorLength = ($maxLength - $totalLength) < 0 ? 5 : ($maxLength - $totalLength);
-    $seperators      = str_repeat($seperator, $seperatorLength);
+    $seperators      = str_repeat($seperator, $seperatorLength - 7);
     $tabs            = str_repeat("\t", $tabs);
-    $comment         = $tabs."{# ".$heading." ".$seperators.$suffix." #}\n\n";
+    $comment         = "\n".$tabs."{# ".$heading." ".$seperators.$suffix." #}\n";
 
     return $comment;
   }
 
-  private function commentHeader($heading, $suffix = null, $tabs = 2, $seperator = "=") {
+  private function commentHeader($heading, $suffix = null, $tabs = 0, $seperator = "=") {
 
     $maxLength       = 80;
     $suffix          = !empty($suffix) ? '['.$suffix.']' : '';
@@ -445,11 +449,11 @@ class TemplateMaker extends Component {
     $seperatorLength = ($maxLength - $totalLength) < 0 ? 5 : ($maxLength - $totalLength);
     $seperators      = str_repeat($seperator, $seperatorLength);
     $tabs            = str_repeat("\t", $tabs);
-    $seperators1     = str_repeat($seperator, $maxLength);
-    $seperators2     = str_repeat(' ', $seperatorLength);
-    $comment         = $tabs."{# ".$seperators1." #}";
+    $seperators1     = str_repeat($seperator, $maxLength - 6);
+    $seperators2     = str_repeat(' ', $seperatorLength - 7);
+    $comment         = "\n".$tabs."{# ".$seperators1." #}";
     $comment        .= "\n".$tabs."{# ".$heading." ".$seperators2.$suffix." #}";
-    $comment        .= "\n".$tabs."{# ".$seperators1." #}\n\n";
+    $comment        .= "\n".$tabs."{# ".$seperators1." #}\n";
 
     return $comment;
 

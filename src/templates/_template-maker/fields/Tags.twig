@@ -4,10 +4,10 @@
 
   <h3><FieldName></h3>
 
-  <ul class="<FieldHandle>">
+  <ul class="<FieldClass>">
     {% for tag in <FieldHandle> %}
       <li><a href="{{ url('tags/'~tag.slug) }}">{{ tag.title }}</a></li>
     {% endfor %}
   </ul>
-  
+
 {% endif %}
