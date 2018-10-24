@@ -22,6 +22,7 @@ class TemplateMaker extends Component {
   private $entryType;
   private $entryTypes;
   private $sectionSettings;
+  private $allFields;
   private $tabLength = 2;
 
   // Exclude these tabs from being generated.
@@ -161,16 +162,18 @@ class TemplateMaker extends Component {
     // Get field & tab data ====================================================
 
     // Get all field type data
-    $allFields = Helpers::$app->query->fields();
+    $this->allFields = Helpers::$app->query->fields();
 
     // Get all tabs for this entry type
     $allTabs = $this->entryType->getFieldLayout()->getTabs();
+
+    $tabData = [];
 
     // Loop all fields within all tabs and create a clean array of useful data.
     foreach ($allTabs as $tab) {
       $fields = $tab->getFields();
       foreach ($fields as $field) {
-        $fieldData = $allFields[array_search($field->id, array_column($allFields, 'id'))];
+        $fieldData = $this->allFields[array_search($field->id, array_column($this->allFields, 'id'))];
         $tabData[$tab->name][] = [
           'name'     => $field->name   ?? false,
           'handle'   => $field->handle ?? false,
@@ -195,7 +198,13 @@ class TemplateMaker extends Component {
 
     $markup = $this->commentHeader($this->entryType->name, '#'.$this->entryType->handle, 0, "/");
 
+    $markup .= "\n{% extends '_layouts/main' %}\n\n";
+
+    $markup .= "{% block content %}\n";
+
     $markup .= $this->getFieldData($tabData);
+
+    $markup .= "\n{% endblock %}";
 
     // Write file ============================================================
 
@@ -217,7 +226,7 @@ class TemplateMaker extends Component {
   // Get Field Type Data
   // --
 
-  private function getFieldData($tabs) {
+  private function getFieldData($tabs, $rule = null) {
 
     $markup = "";
 
@@ -228,19 +237,29 @@ class TemplateMaker extends Component {
       $element = StringHelper::toKebabCase($tab);
 
       // Ignore specific tabs.
-      if ( !in_array($element, $this->tabExclusions) ) {
+      if ( $rule == 'matrix' || !in_array($element, $this->tabExclusions) ) {
 
-        // Ensure the element has at lease one hyphen within the string,
-        // unless the string is a known valid HTML5 singleton.
-        if ( !in_array($element, $this->elementExceptions) && !strpos($element, '-') !== false ) {
-          $element = $element.'-tab';
+        if ($rule !== 'matrix') {
+
+          // Ensure the element has at least one hyphen within the string,
+          // unless the string is a known valid HTML5 singleton.
+          if ( !in_array($element, $this->elementExceptions) && !strpos($element, '-') !== false ) {
+            $element = $element.'-tab';
+          }
+
+          // Comment line for the tab name.
+          $markup .= $this->commentHeader($tab.' Tab');
+
+          // Tab open element.
+          // $markup .= "\n"."<".$element.">\n";
+
+        } else {
+
+          $markup .= $this->commentInline($tab.' Block', null, null, '=');
+
+          $markup .= "\n{% case '".$tab."' %}\n";
+
         }
-
-        // Comment line for the tab name.
-        $markup .= $this->commentHeader($tab.' Tab');
-
-        // Tab open element.
-        $markup .= "\n"."<".$element.">\n";
 
         // Loop through all fields for this tab.
         foreach ($fields as $field) {
@@ -292,7 +311,8 @@ class TemplateMaker extends Component {
                 $fieldFile = $this->redactor($field, $settings);
               break;
               case "Matrix":
-                $fieldFile = $this->matrix($field, $settings);
+                $matrixContent = $this->matrix($field, $settings);
+                $fieldFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/Matrix.twig';
               break;
               default:
                 $fieldFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$fieldFileName.'.twig';
@@ -304,7 +324,7 @@ class TemplateMaker extends Component {
           $fieldTypeName = preg_replace('/([a-z])([A-Z])/s','$1 $2', $fieldTypeName);
 
           // If the file exists.
-          if ( !empty($fieldContent) || !empty($fieldFile) && file_exists($fieldFile)) {
+          if ( !empty($fieldContent) || !empty($matrixContent) || !empty($fieldFile) && file_exists($fieldFile)) {
 
             // Comment line for the field name.
             // $markup .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
@@ -320,7 +340,11 @@ class TemplateMaker extends Component {
                 copy($fieldFile, $destination);
               }
 
-              $markup .= "\n{% include '_components/".$fieldFileName."' %}\n";
+              if ( $rule != 'matrix') {
+                $markup .= "\n{% include '_components/".$fieldFileName."' %}\n";
+              } else {
+                $markup .= "\n{% include '_components/".$fieldFileName."' with { image : block.".$field['handle'].".one } %}\n";
+              }
 
             } else {
 
@@ -344,8 +368,8 @@ class TemplateMaker extends Component {
               // with the relivant fieldHandle.
 
 
-              $find    = ["<FieldHandle>", "<FieldName>", "<FieldClass>"];
-              $replace = [$field['handle'], $field['name'], StringHelper::toKebabCase($field['handle'])];
+              $find    = ["<FieldHandle>", "<FieldName>", "<FieldClass>", "<FieldContent>"];
+              $replace = [$field['handle'], $field['name'], StringHelper::toKebabCase($field['handle']), ($matrixContent ?? false)];
 
               $fieldContent = str_replace($find, $replace, $fieldContent);
 
@@ -357,8 +381,10 @@ class TemplateMaker extends Component {
 
         }
 
-        // Tab close element.
-        $markup .= "\n</".$element.">\n";
+        if ($rule !== 'matrix') {
+          // Tab close element.
+          // $markup .= "\n</".$element.">\n";
+        }
       }
 
     }
@@ -469,7 +495,7 @@ class TemplateMaker extends Component {
     $tabs            = str_repeat("\t", $tabs);
     $seperators1     = str_repeat($seperator, $maxLength - 6);
     $seperators2     = str_repeat(' ', $seperatorLength - 7);
-    $comment         = "\n".$tabs."{# ".$seperators1." #}";
+    $comment         = ($seperator !== '/' ? "\n" : "").$tabs."{# ".$seperators1." #}";
     $comment        .= "\n".$tabs."{# ".$heading." ".$seperators2.$suffix." #}";
     $comment        .= "\n".$tabs."{# ".$seperators1." #}\n";
 
@@ -480,6 +506,8 @@ class TemplateMaker extends Component {
   // ===========================================================================
   // Special rules for specific field types
   // ===========================================================================
+
+  // Redactor Field ------------------------------------------------------------
 
   private function redactor($field, $settings) {
 
@@ -503,9 +531,33 @@ class TemplateMaker extends Component {
     return Craft::getAlias('@helpers').'/templates/_template-maker/fields/Redactor.twig';
   }
 
-  private function matrix($field) {
+  // Matrix Field --------------------------------------------------------------
 
-    return "";
+  private function matrix($field, $settings) {
+
+    $tabData = [];
+
+    $allTabs = Craft::$app->getMatrix()->getBlockTypesByFieldId($field['id']);
+
+    // Loop all fields within all tabs and create a clean array of useful data.
+    foreach ($allTabs as $tab) {
+      $fields = $tab->getFields();
+      foreach ($fields as $field) {
+        $fieldData = $this->allFields[array_search($field->id, array_column($this->allFields, 'id'))];
+        $tabData[$tab->handle][] = [
+          'name'     => $field->name   ?? false,
+          'handle'   => $field->handle ?? false,
+          'id'       => $field->id     ?? false,
+          'type'     => $fieldData['type'] ?? false,
+          'settings' => $fieldData['settings'] ?? false
+        ];
+      }
+    }
+
+    $find    = ["entry."];
+    $replace = ["block."];
+
+    return str_replace($find, $replace, $this->getFieldData($tabData, 'matrix'));
 
   }
 

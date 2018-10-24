@@ -1,3 +1,15 @@
-{% set <FieldHandle> = entry.<FieldHandle> %}
+{% set <FieldHandle> = entry.<FieldHandle>.all() %}
 
-<h3><FieldName></h3>
+{% if <FieldHandle> is not empty %}
+
+  {% for block in <FieldHandle> %}
+
+    {% set blocktype = block.type.handle %}
+
+    {% switch blocktype %}
+      <FieldContent>
+    {% endswitch %}
+
+  {% endfor %}
+
+{% endif %}

@@ -1,6 +1,8 @@
-{% set <FieldHandle> = entry.<FieldHandle>.getHex() %}
+{% set <FieldHandle> = entry.<FieldHandle> %}
 
 {% if <FieldHandle> is not empty %}
+
+  {% set <FieldHandle> = <FieldHandle>.getHex() %}
 
   <h3><FieldName></h3>
 
