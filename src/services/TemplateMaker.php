@@ -203,6 +203,7 @@ class TemplateMaker extends Component {
     $markup .= "{% block content %}\n";
 
     $markup .= $this->getFieldData($tabData);
+    // $markup .= $this->indentContent($this->getFieldData($tabData), 1);
 
     $markup .= "\n{% endblock %}";
 
@@ -248,16 +249,16 @@ class TemplateMaker extends Component {
           }
 
           // Comment line for the tab name.
-          $markup .= $this->commentHeader($tab.' Tab');
+          $markup .= $this->commentHeader($tab.' Tab', null, 1);
 
           // Tab open element.
           // $markup .= "\n"."<".$element.">\n";
 
         } else {
 
-          $markup .= $this->commentInline($tab.' Block', null, null, '=');
+          $markup .= $this->commentInline($tab.' Block', null, 4, '=');
 
-          $markup .= "\n{% case '".$tab."' %}\n";
+          $markup .= "\n".$this->indentContent("{% case '".$tab."' %}", 4);
 
         }
 
@@ -327,8 +328,7 @@ class TemplateMaker extends Component {
           if ( !empty($fieldContent) || !empty($matrixContent) || !empty($fieldFile) && file_exists($fieldFile)) {
 
             // Comment line for the field name.
-            // $markup .= "\n".$tabIndentation.$tabIndentation."{# ".$field['name']." ".$deviders.$type." #}\n";
-            $markup .= $this->commentInline($field['name'], $fieldTypeName);
+            $markup .= $this->commentInline($field['name'], $fieldTypeName, ($rule != 'matrix' ? 1 : 5));
 
             if ($includeField) {
 
@@ -341,9 +341,9 @@ class TemplateMaker extends Component {
               }
 
               if ( $rule != 'matrix') {
-                $markup .= "\n{% include '_components/".$fieldFileName."' %}\n";
+                $markup .= "\n".$this->indentContent("{% include '_components/".$fieldFileName."' %}\n", 1);
               } else {
-                $markup .= "\n{% include '_components/".$fieldFileName."' with { image : block.".$field['handle'].".one } %}\n";
+                $markup .= "\n".$this->indentContent("{% include '_components/".$fieldFileName."' with { image : block.".$field['handle'].".one } %}\n", 5);
               }
 
             } else {
@@ -353,21 +353,11 @@ class TemplateMaker extends Component {
                 $fieldContent = file_get_contents($fieldFile);
               }
 
-              // TODO: Add tabs on each line:
-              // SEE: https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php
-
-              // $separator = "\r\n";
-              // $line = strtok($fieldContent, $separator);
-              //
-              // while ($line !== false) {
-              //     # do something with $line
-              //     $line = strtok( $separator );
-              // }
+              // Indent all lines for.
+              $fieldContent = $this->indentContent($fieldContent, ($rule != 'matrix' ? 1 : 5));
 
               // Replace any instances of the string 'fieldHandle', and replace it
               // with the relivant fieldHandle.
-
-
               $find    = ["<FieldHandle>", "<FieldName>", "<FieldClass>", "<FieldContent>"];
               $replace = [$field['handle'], $field['name'], StringHelper::toKebabCase($field['handle']), ($matrixContent ?? false)];
 
@@ -469,6 +459,47 @@ class TemplateMaker extends Component {
   }
 
   // ---------------------------------------------------------------------------
+  // Tabbing
+  // ---------------------------------------------------------------------------
+  /** @link https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php */
+
+  private function indentContent($content, $tabs = 0, $trim = "none") {
+
+    $separator = "\r\n";
+    $tabs      = str_repeat("\t", $tabs);
+    $line      = strtok($content, $separator);
+    $temp      = "";
+    $count     = 0;
+
+    while ($line !== false) {
+
+      // $temp .= ($count != 0 ? "\n" : "").$tabs.$line.($this->endsWith($line, ' #}') ? '' : "\n");
+      $temp .= ($count != 0 ? "\n" : "").$tabs.$line."\n";
+      $line = strtok( $separator );
+      $count ++;
+
+    }
+
+    return $temp;
+
+  }
+
+  private function startsWith($haystack, $needle) {
+    $length = strlen($needle);
+    return (substr($haystack, 0, $length) === $needle);
+  }
+
+  private function endsWith($haystack, $needle) {
+    $length = strlen($needle);
+
+    if ($length == 0) {
+        return true;
+    }
+
+    return (substr($haystack, -$length) === $needle);
+  }
+
+  // ---------------------------------------------------------------------------
   // Commenting markup
   // ---------------------------------------------------------------------------
 
@@ -493,7 +524,7 @@ class TemplateMaker extends Component {
     $seperatorLength = ($maxLength - $totalLength) < 0 ? 5 : ($maxLength - $totalLength);
     $seperators      = str_repeat($seperator, $seperatorLength);
     $tabs            = str_repeat("\t", $tabs);
-    $seperators1     = str_repeat($seperator, $maxLength - 6);
+    $seperators1     = str_repeat($seperator, $maxLength - 8);
     $seperators2     = str_repeat(' ', $seperatorLength - 7);
     $comment         = ($seperator !== '/' ? "\n" : "").$tabs."{# ".$seperators1." #}";
     $comment        .= "\n".$tabs."{# ".$heading." ".$seperators2.$suffix." #}";
@@ -557,7 +588,9 @@ class TemplateMaker extends Component {
     $find    = ["entry."];
     $replace = ["block."];
 
-    return str_replace($find, $replace, $this->getFieldData($tabData, 'matrix'));
+    $markup  = str_replace($find, $replace, $this->getFieldData($tabData, 'matrix'));
+
+    return $markup;
 
   }
 
