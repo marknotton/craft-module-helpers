@@ -20,6 +20,13 @@
 		value: template ?? ''
 	}) }}
 
+	{{ forms.checkbox({
+		id : 'variables',
+		label: 'Place all variables near the top of the template',
+		name: 'variables',
+		value: 'false'
+	}) }}
+
 	<p class="notice change">
 		<i>ℹ️</i>A change in the field layout was detected. Remember to save this entry
 		type before attempting to generate the template file.

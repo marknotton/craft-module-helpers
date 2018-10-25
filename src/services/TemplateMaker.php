@@ -23,6 +23,7 @@ class TemplateMaker extends Component {
   private $entryTypes;
   private $sectionSettings;
   private $allFields;
+  private $variabes = "";
   private $tabLength = 2;
 
   // Exclude these tabs from being generated.
@@ -152,11 +153,13 @@ class TemplateMaker extends Component {
     $path = !empty($path) ? rtrim('/'.$path, '/') : '';
     $template = $template.$timestamp.'.twig';
     $templatePath = Craft::getAlias('@templates').$path.'/'.$template;
+    $this->variabes = "";
 
     // Set the Section and Entry type data
     if (empty($this->section) || empty($this->entryType)) {
 
       $this->setSectionAndEntrytype($sectionId, $entryTypeId);
+
     }
 
     // Get field & tab data ====================================================
@@ -202,12 +205,16 @@ class TemplateMaker extends Component {
 
     $markup .= "{% block content %}\n";
 
-    $markup .= $this->getFieldData($tabData);
+    $content = $this->getFieldData($tabData);
+
+    $markup .= "\n".$this->variabes;
+
+    $markup .= $content;
     // $markup .= $this->indentContent($this->getFieldData($tabData), 1);
 
     $markup .= "\n{% endblock %}";
 
-    // Write file ============================================================
+    // Write file ==============================================================
 
     fwrite($newTemplate, $markup);
 
@@ -223,9 +230,9 @@ class TemplateMaker extends Component {
 
   }
 
-  // ---
+  // ===========================================================================
   // Get Field Type Data
-  // --
+  // ===========================================================================
 
   private function getFieldData($tabs, $rule = null) {
 
@@ -267,6 +274,10 @@ class TemplateMaker extends Component {
 
           $includeField = false;
 
+          // Predefine content and file variables for the next bit...
+          $fieldContent = false;
+          $fieldFile    = false;
+
           // Get field settings;
           $settings = json_decode($field['settings']);
 
@@ -299,10 +310,6 @@ class TemplateMaker extends Component {
 
             // Use the $fieldFileName to set a field type name to be used in the generated documentation.
             $fieldTypeName = $fieldFileName;
-
-            // Predefine content and file variables for the next bit...
-            $fieldContent = false;
-            $fieldFile    = false;
 
             // Change the way fields are handled if they required special rules.
             // Fields can return strings (preferably as HTML) to be rendered as markup.
@@ -363,8 +370,22 @@ class TemplateMaker extends Component {
 
               $fieldContent = str_replace($find, $replace, $fieldContent);
 
+              if ($rule !== 'matrix') {
+
+                $firstLine = strtok($fieldContent, "\n");
+
+                if ( $this->startsWith($firstLine, "\t{% set") ) {
+
+                  $this->variabes .= $firstLine."\n";
+                  $fieldContent = str_replace($firstLine."\n\n", '', $fieldContent);
+
+                }
+
+              }
+
               // Add modified contents to layout.
               $markup .= "\n".$fieldContent;
+
 
             }
           }
@@ -384,9 +405,9 @@ class TemplateMaker extends Component {
   }
 
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // Set the Section and Entry type data
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
 
   private function setSectionAndEntrytype($sectionId, $entryTypeId) {
 
@@ -403,9 +424,9 @@ class TemplateMaker extends Component {
     $this->entryType = $this->entryTypes[array_search($entryTypeId, array_column($this->entryTypes, 'id'))];
   }
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // Path Sanitiser
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
 
   private function pathSanitiser() {
 
@@ -420,9 +441,9 @@ class TemplateMaker extends Component {
     }
   }
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // Template Name Sanitiser
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
 
   private function templateSantiser() {
 
@@ -458,9 +479,9 @@ class TemplateMaker extends Component {
 
   }
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // Tabbing
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   /** @link https://stackoverflow.com/questions/1462720/iterate-over-each-line-in-a-string-in-php */
 
   private function indentContent($content, $tabs = 0, $trim = "none") {
@@ -493,15 +514,15 @@ class TemplateMaker extends Component {
     $length = strlen($needle);
 
     if ($length == 0) {
-        return true;
+      return true;
     }
 
     return (substr($haystack, -$length) === $needle);
   }
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // Commenting markup
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
 
   private function commentInline($heading, $suffix = null, $tabs = 0, $seperator = "-") {
 

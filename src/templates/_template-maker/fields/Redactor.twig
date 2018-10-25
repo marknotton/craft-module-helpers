@@ -1,3 +1,9 @@
-<h3><FieldName></h3>
+{% set <FieldHandle> = entry.<FieldHandle> %}
 
-{{ entry.<FieldHandle> is not empty ? entry.<FieldHandle> }}
+{% if <FieldHandle> is not empty %}
+
+  <h3><FieldName></h3>
+
+  {{ entry.<FieldHandle> }}
+
+{% endif %}
