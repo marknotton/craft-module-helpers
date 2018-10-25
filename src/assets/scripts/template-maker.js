@@ -18,6 +18,7 @@ class TemplateMaker {
     this.elements.path      = this.elements.form.find('input#path');
     this.elements.template  = this.elements.form.find('input#template');
     this.elements.overwrite = this.elements.form.find('#overwrite');
+    this.elements.variables = this.elements.form.find('#variables');
 
     // Notices
     this.notices = [];
@@ -252,6 +253,7 @@ class TemplateMaker {
         path        : this.path,
         template    : this.template,
         timestamp   : addTimeStamp ? '_'+this.timestamp : '',
+        variables   : this.elements.variables.is(':checked')
       }),
       credentials : 'same-origin',
     })

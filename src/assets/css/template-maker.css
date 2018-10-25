@@ -86,7 +86,12 @@ form#template-maker #template-field:after { content:".twig"; margin-left:10px; }
 
 form#template-maker.exists:not(.overwrite) #template-field:after { content:"_"attr(data-timestamp)".twig"; }
 
+/* Variables Checkbox */
+
+form#template-maker #variables + label { margin-top:10px;  }
+
 /* form#template-maker.exists */
+
 form#template-maker warning-message {
   display:none;
   border-radius:4px;

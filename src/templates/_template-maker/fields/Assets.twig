@@ -2,11 +2,11 @@
 
 {% if <FieldHandle> is not empty %}
 
-  <h3><FieldName></h3>
+  <h3>{{ "<FieldName>"|t }}</h3>
 
   <ul class="<FieldClass>">
     {% for rel in <FieldHandle> %}
-      <li><a href="/{{ rel.uri }}">{{ rel.filename }}</a></li>
+      <li><a href="/{{ rel.uri }}">{{ rel.filename|t }}</a></li>
     {% endfor %}
   </ul>
 

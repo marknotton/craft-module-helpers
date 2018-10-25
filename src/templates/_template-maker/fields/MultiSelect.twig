@@ -2,11 +2,11 @@
 
 {% if <FieldHandle> is not empty %}
 
-  <h3><FieldName></h3>
+  <h3>{{ "<FieldName>"|t }}</h3>
 
   <ul class="<FieldClass>">
     {% for option in <FieldHandle> %}
-      <li {{ option.selected ? 'selected '}}data-value="{{ option.value }}">{{ option }}</li>
+      <li {{ option.selected ? 'selected '}}data-value="{{ option.value }}">{{ option|t }}</li>
     {% endfor %}
   </ul>
 

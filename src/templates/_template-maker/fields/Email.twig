@@ -2,8 +2,8 @@
 
 {% if <FieldHandle> is not empty %}
 
-  <h3><FieldName></h3>
+  <h3>{{ "<FieldName>"|t }}</h3>
 
-  <a href="mailto:{{ <FieldHandle> }}">{{ <FieldHandle> }}</a>
+  <a href="mailto:{{ <FieldHandle> }}">{{ <FieldHandle>|t }}</a>
 
 {% endif %}

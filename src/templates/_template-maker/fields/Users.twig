@@ -2,12 +2,16 @@
 
 {% if <FieldHandle> is not empty %}
 
-  <h3><FieldName></h3>
+  <h3>{{ "<FieldName>"|t }}</h3>
 
   <ul class="<FieldClass>">
-    {% for urser in <FieldHandle> %}
-      <li><a href="/{{ urser.uri }}">{{ urser.title }}</a></li>
+
+    {% for user in <FieldHandle> %}
+
+      <li><a href="/{{ user.uri }}">{{ user.firstName|default(user.username) }}</a></li>
+
     {% endfor %}
+
   </ul>
 
 {% endif %}

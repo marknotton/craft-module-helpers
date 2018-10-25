@@ -23,7 +23,9 @@ class TemplateMaker extends Component {
   private $entryTypes;
   private $sectionSettings;
   private $allFields;
-  private $variabes = "";
+  private $triggered = false;
+  private $rules = [];
+  private $variables = "";
   private $tabLength = 2;
 
   // Exclude these tabs from being generated.
@@ -85,57 +87,63 @@ class TemplateMaker extends Component {
 
   public function init() {
 
-    // Globally define the URL segments
-    $this->segments = Craft::$app->getRequest()->getSegments();
+    if ( $this->triggered == false ) {
 
-    // Checks in the URL to determine if the user is actually on an individual entry type page
-    if ( in_array("entrytypes", $this->segments) && array_search("entrytypes", $this->segments) < count($this->segments) - 1 ) {
+      $this->triggered = true;
 
-      // Grab the section ID from the URL. It's the third from the end segment item.
-      $sectionId = $this->segments[array_search('entrytypes', $this->segments) - 1];
+      // Globally define the URL segments
+      $this->segments = Craft::$app->getRequest()->getSegments();
 
-      // Get the entryType ID from the last parameter in the URL
-      $entryTypeId = $this->segments[array_search('entrytypes', $this->segments) + 1];
+      // Checks in the URL to determine if the user is actually on an individual entry type page
+      if ( in_array("entrytypes", $this->segments) && array_search("entrytypes", $this->segments) < count($this->segments) - 1 ) {
 
-      // Set the Section and Entry type data
-      $this->setSectionAndEntrytype($sectionId, $entryTypeId);
+        // Grab the section ID from the URL. It's the third from the end segment item.
+        $sectionId = $this->segments[array_search('entrytypes', $this->segments) - 1];
 
-      // Set the path name and and template name.
-      $path = $this->pathSanitiser();
-      $templateName = $this->templateSantiser();
+        // Get the entryType ID from the last parameter in the URL
+        $entryTypeId = $this->segments[array_search('entrytypes', $this->segments) + 1];
 
-      // Set a timestamp to be used as a filename suffix should there be a naming conflict.
-      $timestamp = time();
+        // Set the Section and Entry type data
+        $this->setSectionAndEntrytype($sectionId, $entryTypeId);
 
-      // Get a list of all the files that exist in the templates directory.
-      // This will be tested against to instruct users if they are about to
-      // overwrite a existing file.
-      $allFiles = json_encode(Helpers::$app->request->getFileDirectory(null)) ?? [];
+        // Set the path name and and template name.
+        $path = $this->pathSanitiser();
+        $templateName = $this->templateSantiser();
 
-      // It's unlikely the path name and template name will ever be the same.
-      // If this occures, force the template name to '_entry'
-      if ( $path == $templateName ) {
-        $templateName = '_entry';
+        // Set a timestamp to be used as a filename suffix should there be a naming conflict.
+        $timestamp = time();
+
+        // Get a list of all the files that exist in the templates directory.
+        // This will be tested against to instruct users if they are about to
+        // overwrite a existing file.
+        $allFiles = json_encode(Helpers::$app->request->getFileDirectory(null)) ?? [];
+
+        // It's unlikely the path name and template name will ever be the same.
+        // If this occures, force the template name to '_entry'
+        if ( $path == $templateName ) {
+          $templateName = '_entry';
+        }
+
+        // Define a bunch of data that will passed into the template maker form
+        $settings = [
+          'sectionId'   => $sectionId,
+          'entryTypeId' => $entryTypeId,
+          'path'        => $path,
+          'template'    => $templateName,
+          'timestamp'   => $timestamp,
+          'allFiles'    => $allFiles,
+        ];
+
+        // Render the template-maker form and return the markup.
+        $template = Craft::$app->view->renderTemplate("helpers/_template-maker/form", $settings);
+
+        // Render the templateMakerForm variable as a JS variable.
+        Craft::$app->view->registerJsVar('templateMakerForm', str_replace(array("\n", "\r"), '', $template));
+
+        // $settings['timestamp'] = '';
+        // $settings['variables'] = true;
+        // $this->create($settings);
       }
-
-      // Define a bunch of data that will passed into the template maker form
-      $settings = [
-        'sectionId'   => $sectionId,
-        'entryTypeId' => $entryTypeId,
-        'path'        => $path,
-        'template'    => $templateName,
-        'timestamp'   => $timestamp,
-        'allFiles'    => $allFiles,
-      ];
-
-      // Render the template-maker form and return the markup.
-      $template = Craft::$app->view->renderTemplate("helpers/_template-maker/form", $settings);
-
-      // Render the templateMakerForm variable as a JS variable.
-      Craft::$app->view->registerJsVar('templateMakerForm', str_replace(array("\n", "\r"), '', $template));
-
-      $settings['timestamp'] = '';
-      $this->create($settings);
     }
   }
 
@@ -153,7 +161,7 @@ class TemplateMaker extends Component {
     $path = !empty($path) ? rtrim('/'.$path, '/') : '';
     $template = $template.$timestamp.'.twig';
     $templatePath = Craft::getAlias('@templates').$path.'/'.$template;
-    $this->variabes = "";
+    $this->variables = "";
 
     // Set the Section and Entry type data
     if (empty($this->section) || empty($this->entryType)) {
@@ -205,12 +213,20 @@ class TemplateMaker extends Component {
 
     $markup .= "{% block content %}\n";
 
-    $content = $this->getFieldData($tabData);
+    // $content = $this->getFieldData($tabData);
 
-    $markup .= "\n".$this->variabes;
+    if ( $variables ?? false ) {
+
+      $content = $this->getFieldData($tabData, 'variables');
+      $markup .= "\n".$this->variables;
+
+    } else {
+
+      $content = $this->getFieldData($tabData);
+
+    }
 
     $markup .= $content;
-    // $markup .= $this->indentContent($this->getFieldData($tabData), 1);
 
     $markup .= "\n{% endblock %}";
 
@@ -234,9 +250,13 @@ class TemplateMaker extends Component {
   // Get Field Type Data
   // ===========================================================================
 
-  private function getFieldData($tabs, $rule = null) {
+  private function getFieldData($tabs, $rules = null) {
 
     $markup = "";
+
+    if (!empty($rules)) {
+      $this->setRules($rules);
+    }
 
     // Loop through all tabs.
     foreach ($tabs as $tab => $fields) {
@@ -245,9 +265,9 @@ class TemplateMaker extends Component {
       $element = StringHelper::toKebabCase($tab);
 
       // Ignore specific tabs.
-      if ( $rule == 'matrix' || !in_array($element, $this->tabExclusions) ) {
+      if ( $this->rule('matrix') || !in_array($element, $this->tabExclusions) ) {
 
-        if ($rule !== 'matrix') {
+        if (!$this->rule('matrix')) {
 
           // Ensure the element has at least one hyphen within the string,
           // unless the string is a known valid HTML5 singleton.
@@ -321,6 +341,7 @@ class TemplateMaker extends Component {
               case "Matrix":
                 $matrixContent = $this->matrix($field, $settings);
                 $fieldFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/Matrix.twig';
+                $this->removeRule('matrix');
               break;
               default:
                 $fieldFile = Craft::getAlias('@helpers').'/templates/_template-maker/fields/'.$fieldFileName.'.twig';
@@ -335,7 +356,7 @@ class TemplateMaker extends Component {
           if ( !empty($fieldContent) || !empty($matrixContent) || !empty($fieldFile) && file_exists($fieldFile)) {
 
             // Comment line for the field name.
-            $markup .= $this->commentInline($field['name'], $fieldTypeName, ($rule != 'matrix' ? 1 : 5));
+            $markup .= $this->commentInline($field['name'], $fieldTypeName, ($this->rule('matrix') ? 5 : 1));
 
             if ($includeField) {
 
@@ -347,7 +368,7 @@ class TemplateMaker extends Component {
                 copy($fieldFile, $destination);
               }
 
-              if ( $rule != 'matrix') {
+              if ( !$this->rule('matrix') ) {
                 $markup .= "\n".$this->indentContent("{% include '_components/".$fieldFileName."' %}\n", 1);
               } else {
                 $markup .= "\n".$this->indentContent("{% include '_components/".$fieldFileName."' with { image : block.".$field['handle'].".one } %}\n", 5);
@@ -361,7 +382,7 @@ class TemplateMaker extends Component {
               }
 
               // Indent all lines for.
-              $fieldContent = $this->indentContent($fieldContent, ($rule != 'matrix' ? 1 : 5));
+              $fieldContent = $this->indentContent($fieldContent, ($this->rule('matrix') ? 5 : 1));
 
               // Replace any instances of the string 'fieldHandle', and replace it
               // with the relivant fieldHandle.
@@ -370,13 +391,13 @@ class TemplateMaker extends Component {
 
               $fieldContent = str_replace($find, $replace, $fieldContent);
 
-              if ($rule !== 'matrix') {
+              if (!$this->rule('matrix') && $this->rule('variables')) {
 
                 $firstLine = strtok($fieldContent, "\n");
 
                 if ( $this->startsWith($firstLine, "\t{% set") ) {
 
-                  $this->variabes .= $firstLine."\n";
+                  $this->variables .= $firstLine."\n";
                   $fieldContent = str_replace($firstLine."\n\n", '', $fieldContent);
 
                 }
@@ -388,11 +409,12 @@ class TemplateMaker extends Component {
 
 
             }
+
           }
 
         }
 
-        if ($rule !== 'matrix') {
+        if ($this->rule('matrix')) {
           // Tab close element.
           // $markup .= "\n</".$element.">\n";
         }
@@ -404,6 +426,25 @@ class TemplateMaker extends Component {
 
   }
 
+  // ===========================================================================
+  // Rule checker
+  // ===========================================================================
+
+  private function rule($query) {
+    return in_array($query, $this->rules);
+  }
+
+  private function setRules($criteria) {
+    $criteria = is_string($criteria) ? [$criteria] : $criteria;
+    $this->rules = array_merge($this->rules, $criteria);
+  }
+
+  private function removeRule($rule) {
+    $index = array_search($rule, $this->rules);
+    if($index !== FALSE){
+      unset($this->rules[$index]);
+    }
+  }
 
   // ===========================================================================
   // Set the Section and Entry type data
@@ -458,23 +499,17 @@ class TemplateMaker extends Component {
 
       // Then check on the section type to determine a filename name default
       if ( $this->section->type == 'channel' || $this->section->type == 'structure' ) {
-
         // _entry for channels or structures
         return '_entry';
-
       } else {
-
         // Or index for everything else
         return 'index';
-
       }
 
     } else {
-
       // Lastly if all else fails. Fallback to the original template name.
       // But sanitise if by removing unwanted characters and dynamic twig variables.
       return StringHelper::toKebabCase(preg_replace('/{.*?\}/m', '', $this->sectionSettings->template));
-
     }
 
   }

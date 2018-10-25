@@ -2,7 +2,7 @@
 
 {% if <FieldHandle> is not empty %}
 
-  <h3><FieldName></h3>
+  <h3>{{ "<FieldName>"|t }}</h3>
 
   <time datetime="{{ <FieldHandle>|date('c') }}">
     {{ <FieldHandle>|date("d M Y") }}

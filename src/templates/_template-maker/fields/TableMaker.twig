@@ -7,7 +7,7 @@
 
   <table class="<FieldClass> stylised">
 
-    <caption><FieldName></caption>
+    <caption>{{ "<FieldName>"|t }}</caption>
 
     <thead>
       <tr>
@@ -21,7 +21,7 @@
       {% for row in rows %}
         <tr>
           {% for cell in row %}
-            <td align="{{ columns[loop.index0].align }}" data-label="{{ columns[loop.index0].heading }}"{{ cell is empty ? 'class=empty'}}><span>{{ cell|raw }}</span></td>
+            <td align="{{ columns[loop.index0].align }}" data-label="{{ columns[loop.index0].heading }}"{{ cell is empty ? 'class=empty'}}><span>{{ cell|t|raw }}</span></td>
           {% endfor %}
         </tr>
       {% endfor %}
