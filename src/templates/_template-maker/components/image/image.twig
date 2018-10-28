@@ -25,7 +25,7 @@
   fieldHandle     {String} Default: 'featuredImage'
                            The field handle to use if an entry field object is passed.
 
-  element         {String} Default: 'featured-image'
+  element         {String} Default: 'figure'
                            Custom element tag name that wraps everthing. (Must include at least one hyphen)
 
   imageTitle      {String} Default: Page title or site name
@@ -91,9 +91,10 @@ only require a small thumbnail, the following will do the trick:
   {% set adapative = adapative ?? true %}
 
   {# Change the custom element name #}
-  {% set element = element ?? 'featured-image' %}
+  {% set element = element ?? 'figure' %}
+
   {# This checks that custom elements contain a minimum of two words, each delimted with a hyphen.  #}
-  {% set element = '-' in element ? element : element ~ '-element' %}
+  {% set element = '-' in element or element == 'figure' ? element : element ~ '-element' %}
 
   {# Define the image element #}
   {% if image is not defined %}
