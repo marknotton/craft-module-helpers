@@ -14,7 +14,7 @@ class Modal {
       // Do something after the page has scrolled to the top
     // });
 
-    body.addClass('modal locked');
+    body.animate().addClass('modal locked');
 
     if ( callback !== 'undefined' ) {
       callback();
