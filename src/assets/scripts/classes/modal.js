@@ -10,9 +10,9 @@ class Modal {
 
     $.merge($('modal-background'), $('modal-wrapper .close')).on('click', this.close);
 
-    $.merge(html, body).stop().animate({ scrollTop: 0 }, 300).promise().then(() => {
+    // $.merge(html, body).stop().animate({ scrollTop: 0 }, 300).promise().then(() => {
       // Do something after the page has scrolled to the top
-    });
+    // });
 
     body.addClass('modal locked');
 
