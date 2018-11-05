@@ -215,18 +215,6 @@ class Helpers extends Module {
 
     }
 
-    // TODO: Only allow TemplateMaker to set if it's a CP Request or Controller Request.
-    // The follow condition doesn't seem to work if a controller is calling TemplateMaker
-    // if ( Craft::$app->getRequest()->getIsActionRequest() || Craft::$app->getRequest()->getIsCpRequest() ) {
-      // Add templateMaker class if template-maker is enabled in the config/helpers.php
-      if (getenv('ENVIRONMENT') == 'dev' && Helpers::$app->request->admin() && (self::$settings['cms']['template-maker'] ?? false )) {
-        self::$app->setComponents([
-          'templateMaker' => \modules\helpers\services\TemplateMaker::class
-        ]);
-        Helpers::$app->templateMaker->init();
-      }
-    // }
-
     // Register site routes
     Event::on(
       UrlManager::class,
@@ -234,9 +222,6 @@ class Helpers extends Module {
       // UrlManager::EVENT_REGISTER_CP_URL_RULES,
       function (RegisterUrlRulesEvent $event) {
         $event->rules['fetch-template'] = 'helpers/fetch/template';
-        if (getenv('ENVIRONMENT') == 'dev') {
-          $event->rules['template-maker'] = 'helpers/template-maker/default';
-        }
       }
     );
 
