@@ -189,10 +189,8 @@ class Requests extends Component {
         return file_exists($file) ? $file : (!empty($fallback) ? $fallback : false);
       } else {
         // Relative URL
-        if ( file_exists($file) ) {
+        if ( file_exists($file) || file_exists(Craft::getAlias('@public').'/'.$file)) {
           return $file;
-        } elseif ( file_exists(Craft::getAlias('@public').'/'.$file) ) {
-          return Craft::getAlias('@public').'/'.$file;
         } else {
           return !empty($fallback) ? $fallback : false;
         }

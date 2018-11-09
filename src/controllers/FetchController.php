@@ -14,36 +14,70 @@ class FetchController extends Controller {
 
   public function actionTemplate() {
 
-    $request = null;
+		$response = [];
+
+		// Manage Data Parameters ==================================================
+
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
       $request = $_SERVER['HTTP_X_REQUESTED_WITH'];
       switch (strtolower($request)) {
-        case 'xmlhttprequest':
-          $request = "ajax";
+
+				// AJAX data -----------------------------------------------------------
+
+				case 'xmlhttprequest':
+          $response['request'] = "ajax";
+					$response['message'] = 'A template path was not defined in your AJAX "data" parameters.';
+
+					try {
+						$data = Craft::$app->getRequest()->getBodyParams();
+					} catch(\Exception $e) {
+						$response['error'] = true;
+						$response['message'] = $e->getMessage();
+					}
         break;
-        case 'fetch':
-          $request = "fetch";
-        break;
-        default;
-          $request = "standard";
+
+				// Fetch data ----------------------------------------------------------
+
+				case 'fetch':
+          $response['request'] = "fetch";
+					$response['message'] = 'A template path was not defined in your Fetch "body" parameters.';
+
+					try {
+						$data = json_decode(file_get_contents('php://input'));
+					} catch(\Exception $e) {
+						$response['error'] = true;
+						$response['message'] = $e->getMessage();
+					}
         break;
       }
-    }
+    } else {
 
-    // Extract all post paramaters as variables
-    $data = $request === 'ajax' ? Craft::$app->getRequest()->getBodyParams() : json_decode(file_get_contents('php://input'));
-    extract((array)$data);
+			// URL data --------------------------------------------------------------
 
-    // Default response
-    $response = [
-      'message' => 'Template was not defined in your '.($request == 'ajax' ? 'data' : 'body').' param',
-      'request' => $request,
-      'data' => $data
-    ];
+			$response['request'] = "direct";
+			$response['message'] = 'A template path was not defined in the URL parameters.';
+
+			try {
+				$data = Craft::$app->getRequest()->resolve()[1];
+				unset($data['p']);
+			} catch(\Exception $e) {
+				$response['error'] = true;
+				$response['message'] = $e->getMessage();
+			}
+		}
+
+		// Check to see if $data was defined ---------------------------------------
+
+		if ( !empty($data) ) {
+			$response['data'] = $data;
+			extract((array)$data);
+		}
+
+		// Fetch Template ==========================================================
 
     if(!empty($template)){
 
-      try{
+      try {
 
         $settings = Helpers::$app->request->getSettings();
         $response['success'] = true;
@@ -66,10 +100,13 @@ class FetchController extends Controller {
         $variables = array_merge($settings, (array)$data);
 
         $response['html'] = Craft::$app->getView()->renderTemplate($template, $variables);
+
       } catch(\Exception $e) {
 
+				// Error handler -------------------------------------------------------
+
+				unset($response['success']);
         $response['error'] = true;
-        unset($response['success']);
         $response['message'] = $e->getMessage();
 
       }
