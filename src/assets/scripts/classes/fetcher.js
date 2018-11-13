@@ -53,86 +53,116 @@ class TemplateFetcher {
     }
   }
 
-  get fetcher () {
-    return {
+  // AJAX (ES5 + jQuery) =======================================================
 
-      // AJAX (ES5 + jQuery)
-      ajaxMethod ($this, data, callback) {
-        $.ajax({
-          type     : 'POST',
-          dataType : $this.settings.dataType,
-          url      : $this.settings.url,
-          data     : data,
-          headers  : {
-            [$this.settings.csrf.name]: $this.settings.csrf.token
-          },
-          success (data) {
-            if (data.success === true) {
-              callback(data)
-              if ($this.settings.dev) {
-                console.log('Success:', data)
-              }
-            } else {
-              console.error('Error:', data)
-            }
-            return data;
-          },
-          error (data) {
-            console.error('Template Error:', data.responseJSON.error)
-          }
-        })
+	ajaxMethod (data, callback) {
+    return $.ajax({
+      type     : 'POST',
+      dataType : this.settings.dataType,
+      url      : this.settings.url,
+      data     : data,
+      headers  : {
+        [this.settings.csrf.name]: this.settings.csrf.token
       },
-
-      // Fetch (ES6)
-      fetchMethod ($this, data, callback) {
-        fetch($this.settings.url, {
-          mode    : 'cors',
-          method  : 'POST',
-          headers : new Headers({
-            'Content-Type'     : 'application/json',
-            'Accept'           : 'application/json',
-            'X-Requested-With' : 'fetch',
-            [$this.settings.csrf.name]: $this.settings.csrf.token
-          }),
-          body: JSON.stringify(data),
-          credentials: 'same-origin',
-        })
-        .then(response => {
-          return response[$this.settings.dataType]().then(data => {
-            if (response.ok && !data.error) {
-              if ($this.settings.dev) {
-                console.log('Success:', data)
-              }
-              if (callback ) { callback(data); }
-              return data
-            } else {
-              return Promise.reject({status: response.status, data})
-            }
-          })
-        })
-        .catch(error => {
-          if ( error ) {
-            if (callback ) { callback(error.data); }
-            console.error('Error:', error.data.message)
-          } else {
-            console.error('Unknown error')
+      success (data) {
+        if (data.success === true) {
+          callback(data)
+          if (this.settings.dev) {
+            console.log('Success:', data)
           }
-        })
+        } else {
+          console.error('Error:', data)
+        }
+        return data;
+      },
+      error (data) {
+        console.error('Template Error:', data.responseJSON.error)
       }
-    }
+    })
   }
 
-  template (data, callback) {
-    if (this.settings.fetch) {
-      this.fetcher.fetchMethod(this, data, callback)
+  // Fetch (ES6) ===============================================================
+
+  fetchMethod (data, callback) {
+    return fetch(this.settings.url, {
+      mode    : 'cors',
+      method  : 'POST',
+      headers : new Headers({
+        'Content-Type'     : 'application/json',
+        'Accept'           : 'application/json',
+        'X-Requested-With' : 'fetch',
+        [this.settings.csrf.name]: this.settings.csrf.token
+      }),
+      body: JSON.stringify(data),
+      credentials: 'same-origin',
+    })
+    .then(response => {
+      return response[this.settings.dataType]().then(data => {
+        if (response.ok && !data.error) {
+          if (this.settings.dev) {
+            console.log('Success:', data)
+          }
+          if ( callback ) { callback(data); }
+          return data
+        } else {
+          return Promise.reject({status: response.status, data})
+        }
+      })
+    })
+    .catch(error => {
+      if ( error ) {
+        if ( callback ) { callback(error.data); }
+        console.error('Error:', error.data.message)
+      } else {
+        console.error('Unknown error')
+      }
+    })
+  }
+
+	// Template ==================================================================
+
+  template (...args) {
+
+		if (!args) {
+			console.warn('No arguments were passed');
+			return false;
+		}
+
+		let data = null;
+		let callback = null;
+
+		args.forEach(arg => {
+			switch(typeof arg) {
+			  case 'function':
+			    callback = arg;
+			  break;
+			  case 'object':
+			    if ( !data ) {
+						data = arg;
+					} else {
+						this.settings = Object.assign({}, this.settings, arg)
+					}
+			  break;
+				case 'string':
+					if ( !data ) {
+						data = { section : arg };
+					} else {
+						this.settings = Object.assign({}, this.settings, {url : arg})
+					}
+				break;
+			}
+		})
+
+		if (this.settings.fetch) {
+      return this.fetchMethod(data, callback)
     } else {
-      this.fetcher.ajaxMethod(this, data, callback)
+      return this.ajaxMethod(data, callback)
     }
   }
 
-  get (url, dataType = 'json', data, callback) {
-    this.settings.url = url;
-    this.settings.dataType = dataType;
-    this.template(data, callback);
+	// Alias for template function ===============================================
+
+  get (...args) {
+     this.template(...args)
   }
 };
