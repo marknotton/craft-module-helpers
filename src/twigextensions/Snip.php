@@ -36,7 +36,15 @@ class Snip extends \Twig_Extension {
     }
 
 		// The first argument is the entry that is automatically passed.
-    $string = (string) func_get_arg(0);
+    $string = func_get_arg(0);
+
+		// In some cases you may pass in a redactor field to be truncated.
+		// Redactor data is passed as an object and needs to be queried for the string.
+		if ( gettype($string) == 'object' ) {
+			$string = $string->getRawContent();
+		}
+
+		$string = (string) $string;
 
     // Remove the first argument and set the arguments array
     $arguments = array_slice(func_get_args(), 1);
@@ -128,6 +136,13 @@ class Snip extends \Twig_Extension {
    * @return string            Truncted string
    */
 	public function sentences($string, $limit=2, $suffix='')	{
+
+		// In some cases you may pass in a redactor field to be truncated.
+		// Redactor data is passed as an object and needs to be queried for the string.
+		if ( gettype($string) == 'object' ) {
+			$string = $string->getRawContent();
+		}
+
 		$limit = !is_null($limit) ? $limit : 2 ;
 		$sentences = '';
 		$count = 0;
@@ -157,10 +172,12 @@ class Snip extends \Twig_Extension {
    * @param  string  $suffix   Suffix to add at the end of the line
    * @return string            Truncted string
    */
-	public function description(string $string, int $chars=300, int $sentence=2, string $suffix='') {
-		$string = $this->snip($string, $chars, $suffix, 'chars');
-		$string = $this->sentences($string, $sentence, $suffix);
-		return $string;
-	}
+	 public function description($string, int $chars=300, int $sentence=2, string $suffix='') {
+
+ 		$string = $this->snip($string, $chars, $suffix, 'chars');
+ 		$string = $this->sentences($string, $sentence, $suffix);
+ 		return $string;
+
+ 	}
 
 }
