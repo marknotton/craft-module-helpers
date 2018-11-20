@@ -143,15 +143,6 @@ class Helpers extends Module {
         }
       }
 
-      // Event::on(SystemMessages::class, SystemMessages::EVENT_REGISTER_MESSAGES, function(RegisterEmailMessagesEvent $event) {
-      //   $event->messages[] = [
-      //     'key'     => 'my_message_key',
-      //     'heading' => Craft::t('core-module', 'Email Heading'),
-      //     'subject' => Craft::t('core-module', 'Email Subject'),
-      //     'body'    => Craft::t('core-module', 'The plain text email body...'),
-      //   ];
-      // });
-
       // Add versioning class if versioning is enabled in the config.json
       if ( self::$config['versioning'] ?? false ) {
         self::$app->setComponents([
@@ -225,21 +216,6 @@ class Helpers extends Module {
         $event->rules['fetch-data'] = 'helpers/fetch/data';
       }
     );
-
-    // $aliases = [
-    //   'root'              => Craft::getAlias('@root'),
-    //   'lib'               => Craft::getAlias('@lib'),
-    //   'craft'             => Craft::getAlias('@craft'),
-    //   'config'            => Craft::getAlias('@config'),
-    //   'contentMigrations' => Craft::getAlias('@contentMigrations'),
-    //   'storage'           => Craft::getAlias('@storage'),
-    //   'templates'         => Craft::getAlias('@templates'),
-    //   'translations'      => Craft::getAlias('@translations')
-    // ];
-    //
-    // echo '<pre>';
-    // var_dump($aliases);
-    // echo '</pre>'; die;
 
     Craft::info(
       Craft::t(

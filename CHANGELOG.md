@@ -2,6 +2,8 @@
 
 ## 1.0.6
 
+- Various major changes, fixes and additions.
+
 ## 1.0.5 - 2018-10-19
 
 ### Fixed
