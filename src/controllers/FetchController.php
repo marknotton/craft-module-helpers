@@ -23,14 +23,14 @@ class FetchController extends Controller {
   public function actionTemplate() {
 
 		$requests = $this->requests();
-		$data     = $requests['data'];
+		$query     = $requests['query'];
 		$response = $requests['response'];
 
-		// Check to see if $data was defined ---------------------------------------
+		// Check to see if $query was defined ---------------------------------------
 
-		if ( !empty($data) ) {
-			$response['data'] = $data;
-			extract((array)$data);
+		if ( !empty($query) ) {
+			$response['query'] = $query;
+			extract((array)$query);
 		}
 
 		// Fetch Template ==========================================================
@@ -57,7 +57,7 @@ class FetchController extends Controller {
         }
 
         // These variables will be accessible in the rendered template
-        $variables = array_merge($settings, (array)$data);
+        $variables = array_merge($settings, (array)$query);
 
         $response['html'] = Craft::$app->getView()->renderTemplate($template, $variables);
 
@@ -83,23 +83,29 @@ class FetchController extends Controller {
 	public function actionData() {
 
 		$requests    = $this->requests();
-		$data        = $requests['data'];
+		$query       = $requests['query'];
 		$response    = $requests['response'];
 		$allFields   = Helpers::$app->query->fields();
 		$content     = [];
 		$exclusions  = ['id', 'limit', 'section'];
-		$defaultData = ['title', 'id', 'slug', 'uri', 'type'];
+		$defaultData = ['title', 'id', 'slug', 'uri', 'type', 'postDate'];
 
-		// Extract keys/values from $data if it isn't empty ------------------------
+		// Extract keys/values from $query if it isn't empty ------------------------
 
-		if ( !empty($data) ) {
-			$response['data'] = $data;
+		if ( !empty($query) ) {
+			$response['query'] = $query;
 
 			if ( !empty($allFields) ) {
 
 				$fieldHandles = array_column($allFields, 'handle');
 
-				foreach (array_keys($data) as &$value) {
+				$keys = array_keys((array)$query);
+
+				if ( !empty($query->data) ) {
+					$keys = array_merge($keys, $query->data);
+				}
+
+				foreach ($keys as &$value) {
 				  if (in_array($value, $fieldHandles)) {
 						array_push($defaultData, $value);
 					}
@@ -107,12 +113,14 @@ class FetchController extends Controller {
 
 			}
 
-			extract((array)$data);
+			extract((array)$query);
 		}
+
 
 		// Extract keys/values from $criteria if it isn't empty --------------------
 
 		if ( !empty($criteria) ) {
+
 			if ( $criteria->data ?? false ) {
 				$defaultData = array_merge($defaultData, (array)$criteria->data);
 			}
@@ -124,11 +132,37 @@ class FetchController extends Controller {
 			}
 		}
 
+		// If a limit was defined, assume there may be pagination ------------------
+
+		if ( is_array($query) && ($limit ?? false) ) {
+
+			$newPrev = $query;
+			$newPrev['offset'] = '-'.$newPrev['limit'];
+
+			$newNext = $query;
+			$newNext['offset'] = $newNext['limit'];
+
+			$response['pagination'] = [
+				'previous' => '/fetch-data?'.http_build_query($newPrev),
+				'next' => '/fetch-data?'.http_build_query($newNext)
+			];
+
+		} else {
+
+			// TODO: This may need some attention...
+			// Null is reset after the pagination is handled. But means ALL entries are
+			// going to be queried later on, despite a limitation applied. Pagination
+			// should take over.
+
+			$limit = null;
+
+		}
+
 		// Get the global settings incase it needs to be refered to ----------------
 
 		$settings = Helpers::$app->request->getSettings();
 
-		// Use $criteria and $data to query for results ----------------------------
+		// Use $criteria and $query to query for results ----------------------------
 
 		try {
 
@@ -158,7 +192,7 @@ class FetchController extends Controller {
 				if ( is_array($id) && count($id) > 1 ) {
 					$entries = Entry::find()->id($id)->section($section ?? null)->limit($limit ?? null)->offset($offset ?? null)->all();
 				} else {
-					$entries = Entry::find()->id($id)->section($section ?? null)->limit($limit ?? null)->offset($offset ?? null)->one();
+					$entries = Entry::find()->id($id)->section($section ?? null)->offset($offset ?? null)->one();
 				}
 			} else {
 				$entries = Entry::find()->section($section ?? null)->limit($limit ?? null)->offset($offset ?? null)->all();
@@ -241,7 +275,7 @@ class FetchController extends Controller {
 	private function requests() {
 
 		$response = [];
-		$data = false;
+		$query = false;
 
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
       $request = $_SERVER['HTTP_X_REQUESTED_WITH'];
@@ -254,7 +288,7 @@ class FetchController extends Controller {
 					$response['message'] = 'A template path was not defined in your AJAX "data" parameters.';
 
 					try {
-						$data = Craft::$app->getRequest()->getBodyParams();
+						$query = Craft::$app->getRequest()->getBodyParams();
 					} catch(\Exception $e) {
 						$response['error'] = true;
 						$response['message'] = $e->getMessage();
@@ -268,7 +302,7 @@ class FetchController extends Controller {
 					$response['message'] = 'A template path was not defined in your Fetch "body" parameters.';
 
 					try {
-						$data = json_decode(file_get_contents('php://input'));
+						$query = json_decode(file_get_contents('php://input'));
 					} catch(\Exception $e) {
 						$response['error'] = true;
 						$response['message'] = $e->getMessage();
@@ -283,8 +317,8 @@ class FetchController extends Controller {
 			$response['message'] = 'A template path was not defined in the URL parameters.';
 
 			try {
-				$data = Craft::$app->getRequest()->resolve()[1];
-				unset($data['p']);
+				$query = Craft::$app->getRequest()->resolve()[1];
+				unset($query['p']);
 			} catch(\Exception $e) {
 				$response['error'] = true;
 				$response['message'] = $e->getMessage();
@@ -293,7 +327,7 @@ class FetchController extends Controller {
 
 		// Return the data and responces
 
-		return ["data" => $data, "response" => $response];
+		return ["query" => $query, "response" => $response];
 
 	}
 

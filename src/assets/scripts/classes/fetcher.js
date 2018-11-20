@@ -112,7 +112,7 @@ class TemplateFetcher {
     .catch(error => {
       if ( error ) {
         if ( callback ) { callback(error.data); }
-        console.error('Error:', error.data.message)
+        console.error('Error:', error.data)
       } else {
         console.error('Unknown error')
       }
