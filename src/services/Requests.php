@@ -24,33 +24,6 @@ use craft\helpers\Template;
 class Requests extends Component {
 
   //////////////////////////////////////////////////////////////////////////////
-  // Error Information
-  //////////////////////////////////////////////////////////////////////////////
-
-  public $errors = [
-    400 => [
-      'type'    => "Bad Request",
-      'message' => "The request could not be understood by the server due to malformed syntax."
-    ],
-    403 => [
-      'type'    => "Forbidden",
-      'message' => "You don’t have the proper credentials to access this page."
-    ],
-    404 => [
-      'type'    => "Page Not Found",
-      'message' => "This page could not be found."
-    ],
-    500 => [
-      'type'    => "Internal server error",
-      'message' => "The server encountered an unexpected condition which prevented it from fulfilling the request."
-    ],
-    503 => [
-      'type'    => "Holding Page",
-      'message' => "is currently undergoing maintenance."
-    ]
-  ];
-
-  //////////////////////////////////////////////////////////////////////////////
   // Settings
   //////////////////////////////////////////////////////////////////////////////
 
@@ -196,7 +169,7 @@ class Requests extends Component {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * When check for a files existance, just use this fill. If it doesn't exist, false is return. Otherwise return the url
+   * If file doesn't exist, false is return. Otherwise return the url
    * @param  string $file url string
    * @param  string $fallback If the file doesn't exist. The fallback will be returned. Fallback files are not checked for their existence
    * @example Helpers::$app->request->fileexists(...);
@@ -205,8 +178,6 @@ class Requests extends Component {
   public function fileexists(string $file, string $fallback = null) {
 
     if (gettype($file) == 'string') {
-      // Remove the first slash if it exists
-      $file = trim($file, '/');
 
       // Remove any paramters in the URL for the check.
       // TODO: Put the params back on the url for the ruen value;
@@ -218,7 +189,11 @@ class Requests extends Component {
         return file_exists($file) ? $file : (!empty($fallback) ? $fallback : false);
       } else {
         // Relative URL
-        return file_exists(getcwd().'/'.$file) ? '/'.ltrim($file, '/') : (!empty($fallback) ? $fallback : false);
+        if ( file_exists($file) || file_exists(Craft::getAlias('@public').'/'.$file)) {
+          return $file;
+        } else {
+          return !empty($fallback) ? $fallback : false;
+        }
       }
     }
   }
@@ -587,19 +562,13 @@ class Requests extends Component {
 
     $status = Craft::$app->getResponse()->getStatusCode();
 
-    if ( isset($this->errors[$status]) ) {
+    if ( in_array($status, [400, 403, 404, 500, 503]) ) {
       switch ($status) {
-        case 404:
-          $title = end(Craft::$app->getRequest()->getSegments());
-          $title .= ' '.$this->errors[$status]['type'];
-          $title = StringHelper::titleize($title);
-          $title = str_replace(['_', '-'], ' ', $title);
-        break;
-        case 503:
-          $title = (empty($title) ? 'This website' : $title).' '.$this->errors[$status]['message'];
-        break;
-        default:
-          $title = $status.' '.$this->errors[$status]['type'];
+        case 400 : $title = "E017"; break;
+        case 403 : $title = "E019"; break;
+        case 404 : $title = "E021"; break;
+        case 500 : $title = "E023"; break;
+        case 503 : $title = "E025"; break;
       }
     } elseif (isset($this->getCurrentElement()->title)) {
       $title = $this->getCurrentElement()->title;

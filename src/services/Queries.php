@@ -60,14 +60,16 @@ class Queries extends Component {
 
     if ( Helpers::$database ) {
 
-      $sql = "SELECT handle FROM ".getenv('DB_TABLE_PREFIX')."plugins" ;
+      $sql = "SELECT handle, enabled FROM ".getenv('DB_TABLE_PREFIX')."plugins" ;
 
       $command = Craft::$app->db->createCommand($sql);
       $results = $command->queryAll();
 
       if ($results) {
         foreach ($results as $value) {
-          $newResults[$value['handle'].'Enabled'] = true;
+					if ( $value['enabled'] ) {
+          	$newResults[$value['handle'].'Enabled'] = true;
+					}
         }
       }
     }
@@ -81,8 +83,8 @@ class Queries extends Component {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Get all the section routes rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * Get all the input field data
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -90,7 +92,7 @@ class Queries extends Component {
 
     extract($this->routeOptions(func_get_args()));
 
-    $sql = "SELECT id, name, handle, type FROM ".$this->prefix."fields ";
+    $sql = "SELECT id, name, handle, type, settings FROM ".$this->prefix."fields ";
     $sql .= "ORDER by id" ;
 
     $command = Craft::$app->db->createCommand($sql);
@@ -139,7 +141,7 @@ class Queries extends Component {
 
   /**
    * Get all the entries routes
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -166,7 +168,7 @@ class Queries extends Component {
 
   /**
    * Get all the categories routes
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -193,7 +195,7 @@ class Queries extends Component {
 
   /**
    * Get all the entrues and categories routes
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -207,8 +209,9 @@ class Queries extends Component {
 
   /**
    * Get all the section routes rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
+   * @param  bool   $includeTypes [default:false] Include entry type id, name, handle, and title data too.
    * @return array
    */
   public function sectionRouteRules() {
@@ -223,19 +226,20 @@ class Queries extends Component {
     $command = Craft::$app->db->createCommand($sql);
     $results = $command->queryAll();
 
+    // TODO: Make the include of entry type data optional. $includeTypes
     // TODO: Get entry type data via mySQL command, not this faff...
     // $allSections = Craft::$app->getSections()->getAllSections();
-    foreach ($results as $key => $section) {
-      $entrytypes = Craft::$app->getSections()->getSectionById($section['id'])->getEntryTypes();
-      foreach ($entrytypes as &$entrytype) {
-        $results[$key]['entrytypes'][] = [
-          'id'     => $entrytype->id,
-          'name'   => $entrytype->name,
-          'handle' => $entrytype->handle,
-          'title'  => $entrytype->hasTitleField ? $entrytype->titleLabel : false
-        ];
-      }
-    };
+    // foreach ($results as $key => $section) {
+    //   $entrytypes = Craft::$app->getSections()->getSectionById($section['id'])->getEntryTypes();
+    //   foreach ($entrytypes as &$entrytype) {
+    //     $results[$key]['entrytypes'][] = [
+    //       'id'     => $entrytype->id,
+    //       'name'   => $entrytype->name,
+    //       'handle' => $entrytype->handle,
+    //       'title'  => $entrytype->hasTitleField ? $entrytype->titleLabel : false
+    //     ];
+    //   }
+    // };
 
     return $results;
 
@@ -243,7 +247,7 @@ class Queries extends Component {
 
   /**
    * Get all the category routes rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -265,7 +269,7 @@ class Queries extends Component {
 
   /**
    * Get all the route rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -301,7 +305,7 @@ class Queries extends Component {
 
   /**
    * Get all the section, category, and route rules
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
@@ -332,7 +336,7 @@ class Queries extends Component {
 
   /**
    * Get everything
-   * @param  int    $sideId  Site ID. Defaults to 1
+   * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */

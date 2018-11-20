@@ -3,10 +3,11 @@
   /* Login */
   body.login { background:linear-gradient(to top, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('/assets/images/login-background.jpg') center center / cover no-repeat, url('/assets/images/default-featured.jpg') center center / cover no-repeat; }
   /* #login-form { background-image:url('/assets/images/logo.svg') !important} */
+
   body.login form#login-form h1 {
     color:transparent;
     display:block;
-    font-size:5px; 
+    font-size:5px;
     height:100px;
     white-space: nowrap;
     background-image:url('/assets/images/logo.svg');

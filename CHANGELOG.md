@@ -1,12 +1,16 @@
 # Helpers Changelog
 
+## 1.0.6
+
+- Various major changes, fixes and additions.
+
 ## 1.0.5 - 2018-10-19
+
 ### Fixed
 - Safari 9 bug when adding getters to the document.
 
 ### Added
 - Iterator to the js classes library
-
 
 ## 1.0.4 - 2018-10-11
 ### Added

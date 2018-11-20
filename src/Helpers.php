@@ -57,6 +57,7 @@ class Helpers extends Module {
 
     Craft::setAlias('@modules/helpers', $this->getBasePath());
     Craft::setAlias('@helpers', $this->getBasePath());
+    Craft::setAlias('@public', getcwd());
 
     $this->controllerNamespace = 'modules\helpers\controllers';
 
@@ -205,7 +206,6 @@ class Helpers extends Module {
 
     }
 
-
     // Register site routes
     Event::on(
       UrlManager::class,
@@ -213,6 +213,7 @@ class Helpers extends Module {
       // UrlManager::EVENT_REGISTER_CP_URL_RULES,
       function (RegisterUrlRulesEvent $event) {
         $event->rules['fetch-template'] = 'helpers/fetch/template';
+        $event->rules['fetch-data'] = 'helpers/fetch/data';
       }
     );
 
