@@ -23,7 +23,7 @@ class FetchController extends Controller {
   public function actionTemplate() {
 
 		$requests = $this->requests();
-		$query     = $requests['query'];
+		$query    = $requests['query'];
 		$response = $requests['response'];
 
 		// Check to see if $query was defined ---------------------------------------
@@ -75,6 +75,13 @@ class FetchController extends Controller {
     return $this->asJson($response);
 
   }
+
+	public function actionTranslations() {
+		$requests = $this->requests();
+		$response['query'] = $requests;
+		$response['success'] = true;
+		return $this->asJson($response);
+	}
 
 	// ===========================================================================
 	// Data Fetcher
@@ -211,44 +218,68 @@ class FetchController extends Controller {
 
 				foreach ($defaultData as $crit) {
 
+					$entryItem = $entry[$crit];
+
 					if ($crit == 'type') {
 
 						$result[$crit] = [
-							'id' => $entry[$crit]['id'],
-							'name' => $entry[$crit]['name'],
-							'handle' => $entry[$crit]['handle'],
+							'id'     => $entryItem['id'],
+							'name'   => $entryItem['name'],
+							'handle' => $entryItem['handle'],
 						];
 
-					} else {
-						if ( $entry[$crit]->elementType ?? false && $entry[$crit]->elementType == "craft\/elements\Asset")  {
+					} elseif ( !empty($entryItem->elementType) )  {
 
+						if ( $crit == 'featuredImage' && $entryItem->elementType == 'craft\elements\Asset' ) {
 
 							$properties = [];
-							$properties['image'] = $entry[$crit]->one();
+							$properties['image'] = $entryItem->one();
 							$properties['imageTransform'] = $settings['thumb'];
 
 							$markup = Craft::$app->getView()->renderTemplate('_components/image', $properties);
 
 							// Removes whitespace between HTML tags
 							if ( preg_match( '/(\s){2,}/s', $markup ) === 1 ) {
-			          $markup = preg_replace( '/(\s){2,}/s', '', $markup );
-			        }
+								$markup = preg_replace( '/(\s){2,}/s', '', $markup );
+							}
 
 							$result[$crit] = $markup;
 
+						} elseif ( $entryItem->elementType == 'craft\elements\Category' ) {
+
+							$result[$crit] = [];
+
+							foreach ($entryItem as $cat) {
+								$result[$crit][] = $cat;
+							}
+
 						} else {
-
-							$result[$crit] = $entry[$crit];
-
+							$result[$crit] = $entryItem;
 						}
 
+					} else {
+
+						$result[$crit] = $entryItem;
+
 					}
+
 				}
 
 				$content[] = $result;
 			}
 
+			if ( !empty($_section)) {
+				$types = $_section->getEntryTypes();
+			}
+
 			// $response['criteria'] = $defaultData;
+			$response['results'] = [
+				'total' => count($content),
+				'limit' => !empty($limit) ? (int)$limit : count($content),
+				'offset' => !empty($offset) ? $offset : 0,
+				'pages' => [ 'total' => !empty($limit) ? ($limit ?? 0)/count($content) : 1, 'current' => (!empty($offset) ? (($limit ?? 0)/$offset) : 1)],
+				'types' => !empty($types) ? $types : null
+			];
 			$response['message'] = count($content).' results were found.';
 			$response['entries'] = $content;
 			$response['success'] = true;
