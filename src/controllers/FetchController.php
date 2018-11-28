@@ -319,7 +319,7 @@ class FetchController extends Controller {
 					$response['message'] = 'A template path was not defined in your AJAX "data" parameters.';
 
 					try {
-						$query = Craft::$app->getRequest()->getBodyParams();
+						$query = (object)Craft::$app->getRequest()->getBodyParams();
 					} catch(\Exception $e) {
 						$response['error'] = true;
 						$response['message'] = $e->getMessage();
