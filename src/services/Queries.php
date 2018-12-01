@@ -273,35 +273,39 @@ class Queries extends Component {
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
-  public function routeRules() {
+	 public function routeRules() {
 
-    extract($this->routeOptions(func_get_args()));
+     extract($this->routeOptions(func_get_args()));
 
+ 		// If Craft is version 3.1 or higher, then get the Routes options natively
+ 		if (strpos(Craft::$app->getVersion(), '3.1') !== false) {
+ 			$results = Craft::$app->getRoutes()->getDbRoutes();
+ 		} else {
+ 			// Otherwise do my refined and direct mySQL query.
+ 			$sql = "SELECT uriPattern, template FROM ".$this->prefix."routes ";
+ 			$sql .= $siteId !== false && is_numeric($siteId) ? "WHERE (ISNULL(siteId) OR siteId = ".$siteId.") " : " ";
+ 			$sql .= "ORDER by id";
 
-    $sql = "SELECT uriPattern, template FROM ".$this->prefix."routes ";
-    $sql .= $siteId !== false && is_numeric($siteId) ? "WHERE (ISNULL(siteId) OR siteId = ".$siteId.") " : " ";
-    $sql .= "ORDER by id";
+ 			$command = Craft::$app->db->createCommand($sql);
+ 			$results = $command->queryAll();
 
-    $command = Craft::$app->db->createCommand($sql);
-    $results = $command->queryAll();
+ 			$cmsRoutes = [];
 
-    $fileRoutes = Craft::$app->getRoutes()->getConfigFileRoutes();
-    $cmsRoutes = [];
+ 			if (!empty($results)) {
+ 				foreach($results as &$value) {
+ 					$cmsRoutes[$value['uriPattern']] = ['template' => $value['template']];
+ 				}
+ 			};
+ 		}
 
-    if (!empty($results)) {
-      foreach($results as &$value) {
-        $cmsRoutes[$value['uriPattern']] = ['template' => $value['template']];
-      }
-    };
+     $results = array_merge(
+       Craft::$app->getRoutes()->getConfigFileRoutes(),
+       $results
+     );
 
-    $results = array_merge(
-      $fileRoutes,
-      $cmsRoutes
-    );
+     return $results;
 
-    return $results;
-
-  }
+   }
 
   /**
    * Get all the section, category, and route rules
