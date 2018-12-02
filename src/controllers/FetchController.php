@@ -9,12 +9,13 @@ namespace modules\helpers\controllers;
 use modules\helpers\Helpers;
 
 use Craft;
+use craft\web\View;
 use craft\web\Controller;
 use craft\elements\Entry;
 
 class FetchController extends Controller {
 
-  protected $allowAnonymous = ['template', 'data'];
+  protected $allowAnonymous = ['template', 'data', 'robots'];
 
 	// ===========================================================================
 	// Template Fetcher
@@ -76,11 +77,27 @@ class FetchController extends Controller {
 
   }
 
+	// ===========================================================================
+	// Translations
+	// ===========================================================================
+
 	public function actionTranslations() {
 		$requests = $this->requests();
 		$response['query'] = $requests;
 		$response['success'] = true;
 		return $this->asJson($response);
+
+	}
+
+	// ===========================================================================
+	// Robots
+	// ===========================================================================
+
+	public function actionRobots() {
+		$text = Helpers::$app->request->renderTemplate('_robots');
+    $headers = Craft::$app->response->headers;
+    $headers->add('Content-Type', 'text/plain; charset=utf-8');
+    return $this->asRaw($text);
 	}
 
 	// ===========================================================================

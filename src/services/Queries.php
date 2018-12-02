@@ -42,6 +42,23 @@ class Queries extends Component {
     }
   }
 
+	//////////////////////////////////////////////////////////////////////////////
+  // Check Version
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Check if the current version of Craft consists a specific string.
+   *
+	 * @param  string    $version  Default '3.1'
+	 * @example  Helpers::$app->query->isCraftVersion('3.1');
+   *
+   * @return bool
+   */
+
+	public function isCraftVersion(string $version = '3.1') {
+		return strpos(Craft::$app->getVersion(), $version) !== false;
+	}
+
   //////////////////////////////////////////////////////////////////////////////
   // Check installed plugins
   //////////////////////////////////////////////////////////////////////////////
@@ -60,18 +77,36 @@ class Queries extends Component {
 
     if ( Helpers::$database ) {
 
-      $sql = "SELECT handle, enabled FROM ".getenv('DB_TABLE_PREFIX')."plugins" ;
 
-      $command = Craft::$app->db->createCommand($sql);
-      $results = $command->queryAll();
+			if (version_compare(Craft::$app->getInfo()->version, '3.1', '>=')) {
 
-      if ($results) {
-        foreach ($results as $value) {
-					if ( $value['enabled'] ) {
-          	$newResults[$value['handle'].'Enabled'] = true;
+				$results = Craft::$app->plugins->getAllPluginInfo();
+
+				if ($results) {
+	        foreach ($results as $handle => $value) {
+						if ( $value['isEnabled'] ) {
+	          	$newResults[$handle.'Enabled'] = true;
+						}
+	        }
+	      }
+
+			} else {
+
+	      $sql = "SELECT handle, enabled FROM ".getenv('DB_TABLE_PREFIX')."plugins" ;
+
+	      $command = Craft::$app->db->createCommand($sql);
+	      $results = $command->queryAll();
+
+				if ($results) {
+					foreach ($results as $value) {
+						if ( $value['enabled'] ) {
+							$newResults[$value['handle'].'Enabled'] = true;
+						}
 					}
-        }
-      }
+				}
+
+			}
+
     }
 
     return $newResults;
@@ -278,7 +313,7 @@ class Queries extends Component {
      extract($this->routeOptions(func_get_args()));
 
  		// If Craft is version 3.1 or higher, then get the Routes options natively
- 		if (strpos(Craft::$app->getVersion(), '3.1') !== false) {
+ 		if (version_compare(Craft::$app->getInfo()->version, '3.1', '>=')) {
  			$results = Craft::$app->getRoutes()->getDbRoutes();
  		} else {
  			// Otherwise do my refined and direct mySQL query.

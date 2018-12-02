@@ -18,6 +18,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use yii\base\ErrorException;
 use yii\base\Exception;
 use yii\base\InvalidArgumentException;
+use craft\web\View;
 use craft\web\twig\variables\Rebrand;
 use craft\helpers\Template;
 
@@ -197,6 +198,51 @@ class Requests extends Component {
       }
     }
   }
+
+	//////////////////////////////////////////////////////////////////////////////
+  // Render Templates
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Render templates files from the modules or frontend. If a template exists
+   * in both the frontend and the module; frontend templates will get priority.
+   * @param  string $template Template filename. If it's a twig file, you can ommit the file extension.
+   * @param  array $args Parameters you want to pass into the template.
+   * @param  string
+   * @example Helpers::$app->request->renderTemplate(...);
+   * @return object
+   */
+	public function renderTemplate(string $template, $args = []) {
+
+		// Check if the string has a file extension. If not, add '.twig'
+		if (!substr(strrchr($template,'.'),1)) {
+			$template = $template.'.twig';
+		}
+
+		if ( $this->fileexists(Craft::getAlias('@root').'/templates/'.$template)) {
+
+			// Check if the template file exists relative to the frontend templates
+
+			return \Craft::$app->view->renderTemplate($template, $args);
+
+		} elseif ($this->fileexists(Craft::getAlias('@helpers').'/templates/'.$template) ) {
+
+			// Check if the template file exists relative to the helpers module templates
+
+			$oldMode = \Craft::$app->view->getTemplateMode();
+			\Craft::$app->view->setTemplateMode(View::TEMPLATE_MODE_CP);
+			$render = \Craft::$app->view->renderTemplate('helpers/'.$template, $args);
+			\Craft::$app->view->setTemplateMode($oldMode);
+
+			return $render;
+
+		} else {
+
+			throw new \yii\web\NotFoundHttpException();
+
+		}
+
+	}
 
   //////////////////////////////////////////////////////////////////////////////
   // File Directory

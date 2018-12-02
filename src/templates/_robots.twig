@@ -1,0 +1,51 @@
+{# ////////////////////////////////////////////////////////////////////////// #}
+{# Robots                                                                     #}
+{# ////////////////////////////////////////////////////////////////////////// #}
+
+# robots.txt for {{ siteUrl }}
+
+{% if seomaticEnabled ?? false %}
+Sitemap: {{ seomatic.helper.sitemapIndexForSiteId() }}
+{% endif %}
+
+User-agent: seranking_audit_bot
+User-agent: SEO-PowerSuite-bot
+Allow: /
+
+{% switch getenv('ENVIRONMENT') %}
+
+{% case "production" %}
+
+# Production - don't allow web crawlers to index cpresources/ or vendor/
+
+User-agent: *
+Disallow: /cpresources/
+Disallow: /assets/resources/
+Disallow: /vendor/
+Disallow: /.env
+
+{% case "staging" %}
+
+# Staging - disallow all
+
+User-agent: *
+Disallow: /
+
+{% case "dev" %}
+
+# Dev - disallow all
+
+User-agent: *
+Disallow: /
+
+{% default %}
+
+# Default - don't allow web crawlers to index cpresources/ or vendor/
+
+User-agent: *
+Disallow: /cpresources/
+Disallow: /assets/resources/
+Disallow: /vendor/
+Disallow: /.env
+
+{% endswitch %}
