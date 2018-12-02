@@ -42,23 +42,6 @@ class Queries extends Component {
     }
   }
 
-	//////////////////////////////////////////////////////////////////////////////
-  // Check Version
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Check if the current version of Craft consists a specific string.
-   *
-	 * @param  string    $version  Default '3.1'
-	 * @example  Helpers::$app->query->isCraftVersion('3.1');
-   *
-   * @return bool
-   */
-
-	public function isCraftVersion(string $version = '3.1') {
-		return strpos(Craft::$app->getVersion(), $version) !== false;
-	}
-
   //////////////////////////////////////////////////////////////////////////////
   // Check installed plugins
   //////////////////////////////////////////////////////////////////////////////
