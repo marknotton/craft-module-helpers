@@ -61,5 +61,5 @@ class Accordion {
 }
 
 if ( typeof pluginify !== 'undefined') {
-  pluginify('accordion', Accordion, false);
+  pluginify.add('accordion', Accordion);
 }

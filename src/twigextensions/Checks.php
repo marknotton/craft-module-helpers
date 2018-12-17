@@ -7,7 +7,7 @@ use modules\helpers\Helpers;
 
 class Checks extends \Twig_Extension {
 
-  private $checks   = ['string', 'number', 'blank', 'array', 'object', 'url'];
+  private $checks   = ['bool', 'string', 'number', 'blank', 'array', 'object', 'url'];
   private $elements = ['asset', 'category', 'entry', 'globalset', 'matrixblock', 'tag', 'user', 'single'];
 
   /**
@@ -36,6 +36,15 @@ class Checks extends \Twig_Extension {
       new \Twig_SimpleFilter('fileexists', [Helpers::$app->request, 'fileexists']),
     ];
   }
+
+	/**
+	* Is Boolean
+	*
+	* @return bool
+	*/
+	public function bool($value) {
+		return is_bool($value);
+	}
 
   /**
   * Is String

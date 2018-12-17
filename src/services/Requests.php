@@ -379,24 +379,25 @@ class Requests extends Component {
     } else {
       foreach ($scripts as &$script) {
         if (filter_var($script, FILTER_VALIDATE_URL)) {
+					$script = preg_replace('#^https?://#', '//', $script);
           if ($this->devmode()) {
             $scriptsToLoad[] = Helpers::$app->service->params($script, ['v'=>rand()]);
           } else {
             $scriptsToLoad[] = $script;
           }
-        } else {
-          $scriptsToLoad[] = $dir . $script . $devmode;
+        } elseif (substr( $script, 0, 2 ) === "//") {
+					$scriptsToLoad[] = ($minified ? str_replace('.js', '.min.js', $script) : $script) . $devmode;
+				} else {
+          $scriptsToLoad[] = $dir . ($minified ? str_replace('.js', '.min.js', $script) : $script) . $devmode;
         }
       }
-      if ( $minified ) {
-        $scriptsToLoad = array_map(function($val) { return str_replace('.js', '.min.js', $val); }, $scriptsToLoad);
-      }
+
     }
 
     if ( !$filenamesOnly ) {
       $scriptTags = [];
       foreach ($scriptsToLoad as &$file) {
-        $scriptTags[] = '<script src="'.$dir.$file.$devmode.'"></script>';
+        $scriptTags[] = '<script src="'.$file.'"></script>';
       }
 
       return Template::raw(implode("\n",$scriptTags));

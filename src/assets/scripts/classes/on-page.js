@@ -16,46 +16,33 @@ class onPage {
   * @example $('main').onPage(500, ( element ) => { ... }, () => { ... });
   */
 
-  constructor(elements, args) {
+  constructor() {
 
-    // Return false is no elements were passed
-    if ( typeof elements == 'undefined' || typeof elements !== 'object') {
-      return false;
-    }
+		let elements = null;
+		let callbackTrue = null;
+		let callbackFalse = null;
+		let delay = null;
 
-    // If no argments were passed, just do a check for the elements existance
-    if ( !Object.keys(args).length ) {
-      return elements.length ? true : false;
-    }
+		Array.prototype.slice.call(arguments).forEach((arg) => {
 
-    // Callback delay is set to false by default
-    let delay = false;
+			switch (typeof arg) {
+				case 'function':
+					if ( callbackTrue == null ) { callbackTrue = arg }
+					else if ( callbackFalse == null ) { callbackFalse = arg	}
+				break;
+				case 'number':
+					delay = arg;
+				break;
+				case 'object':
+					elements = arg;
+				break;
+			}
 
-    // Loop through the object and define it's key and value
-    Object.entries(args).forEach((entry) => {
-      const [key, value] = entry;
-
-      if (!isNaN(key)) {
-        switch (typeof value) {
-          case 'function':
-            if (typeof this.callbackTrue == 'undefined') {
-              this.callbackTrue = value;
-            } else if (typeof this.callbackFalse == 'undefined') {
-              this.callbackFalse = value;
-            }
-          break
-          case 'number':
-            if (!delay) {
-              delay = value;
-            }
-          break
-        }
-      }
-    });
+		});
 
     // Manage Callbacks ========================================================
 
-    if ( typeof this.callbackTrue !== 'undefined' ) {
+    if ( callbackTrue !== null ) {
 
       if ( elements.length ) {
 
@@ -64,30 +51,31 @@ class onPage {
         if ( delay ) {
 
           setTimeout(() => {
-            this.callbackTrue(elements);
+            callbackTrue(elements);
           }, delay);
 
         } else {
 
-          this.callbackTrue(elements);
+          callbackTrue(elements);
 
         }
 
-      } else if (typeof this.callbackFalse !== 'undefined') {
+      } else if ( callbackFalse !== null) {
 
         // Elements don't exist ------------------------------------------------
 
         if ( delay ) {
 
           setTimeout(() => {
-            this.callbackFalse(elements);
+            callbackFalse(elements);
           }, delay);
 
         } else {
 
-          this.callbackFalse();
+          callbackFalse();
 
         }
+
       }
     }
   }
@@ -97,5 +85,5 @@ class onPage {
 // Pluginify - Convert plugin class into a jQuery plugin
 // =============================================================================
 if ( window.jQuery && typeof pluginify !== 'undefined') {
-  pluginify('onPage', onPage, false);
+  pluginify.add('onPage', onPage);
 }
