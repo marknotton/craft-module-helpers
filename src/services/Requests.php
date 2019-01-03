@@ -359,12 +359,12 @@ class Requests extends Component {
   // Load Scripts as per the config.json & settings.php options
   //////////////////////////////////////////////////////////////////////////////
 
-  public function loadScripts($filenamesOnly = false, $dir = null) {
+  public function loadScripts($filenamesOnly = false, $dir = null, $scripts = null) {
 
     $dir        = $dir ?? Helpers::$settings['js'] ?? '';
     $versioning = Helpers::$settings['versioning'] ?? false;
     $minified   = Helpers::$settings['minify'] ?? false;
-    $scripts    = Helpers::$settings['scripts'] ?? [];
+    $scripts    = $scripts ?? Helpers::$settings['scripts'] ?? [];
     $devmode    = ($this->devmode() ? '?v='.rand() : '');
 
     $scriptsToLoad = [];
@@ -408,8 +408,8 @@ class Requests extends Component {
 
   }
 
-  public function getScripts($dir = null) {
-    return $this->loadScripts(true, $dir);
+  public function getScripts($dir = null, $scripts = null) {
+    return $this->loadScripts(true, $dir, $scripts);
   }
 
   //////////////////////////////////////////////////////////////////////////////
