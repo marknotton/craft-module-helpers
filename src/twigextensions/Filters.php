@@ -2,6 +2,7 @@
 
 namespace modules\helpers\twigextensions;
 use modules\helpers\Helpers;
+use craft\helpers\Template;
 
 use Craft;
 
@@ -10,6 +11,7 @@ class Filters extends \Twig_Extension {
   public function getFilters() {
     return [
       new \Twig_SimpleFilter('criteria', [$this, 'criteriaFilter']),
+      new \Twig_SimpleFilter('find', [$this, 'findFilter']),
       new \Twig_SimpleFilter('arrayColumn', [$this, 'column']),
       new \Twig_SimpleFilter('getAttributes', [$this, 'getAttributes']),
       new \Twig_SimpleFilter('unique', [$this, 'unique']),
@@ -18,6 +20,7 @@ class Filters extends \Twig_Extension {
       new \Twig_SimpleFilter('ucfirst', [$this, 'uppercaseFirstWord']),
       new \Twig_SimpleFilter('count', [$this, 'count'], ['is_safe' => ['html']]),
       new \Twig_SimpleFilter('cleanup', [$this, 'cleanup'], ['is_safe' => ['html']] ),
+      new \Twig_SimpleFilter('render_text', [$this, 'renderText'], ['is_safe' => ['html']] ),
       new \Twig_SimpleFilter('dump', [$this, 'dump'])
     ];
   }
@@ -26,6 +29,12 @@ class Filters extends \Twig_Extension {
   public function arrayColumn(array $array, $criteria) {
     return array_column($array, $criteria);
   }
+
+	public function renderText($text) {
+		$template = Craft::$app->view->getTwig()->createTemplate($text);
+		$template = $template->render([]);
+		return Template::raw($template);
+	}
 
   public function jsonDecode($data) {
     return json_decode($data);
@@ -129,6 +138,34 @@ class Filters extends \Twig_Extension {
       });
     }
   }
+
+	/**
+  * Filter an object of sections down by specific criteria
+  *
+	* @param  object             $data     The original string passed in by the filter
+	* @param  string|int|object  $criteria string = slug, int = id, object of filter criteria. See criteriaFilter function above.
+  *
+  * @example
+  * Get all entries from the about section
+  * {% set about = craft.entries.section('about').all() %}
+  * Return the team entry specfically without any additional database queries
+  * {% set team = about|find('team') %}
+  *
+  * @return object
+  */
+
+	public function findFilter($data, $criteria) {
+
+		if ( gettype($criteria) == 'string') {
+			$key = array_keys($this->criteriaFilter($data, ['slug'=>$criteria]))[0];
+		} elseif ( gettype($criteria) == 'integer') {
+			$key = array_keys($this->criteriaFilter($data, ['id'=>$criteria]))[0];
+		} else {
+			$key = array_keys($this->criteriaFilter($data, $criteria))[0];
+		}
+
+		return $data[$key];
+	}
 
   /**
   * Filter an object of arrays down by specific criteria

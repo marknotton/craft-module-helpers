@@ -176,28 +176,39 @@ class Requests extends Component {
    * @example Helpers::$app->request->fileexists(...);
    * @return bool
    */
-  public function fileexists(string $file, string $fallback = null) {
+  public function fileexists(string $file, string $fallback = null, string $alias = '@public') {
 
-    if (gettype($file) == 'string') {
+    // Remove any paramters in the URL for the check.
+    // TODO: Put the params back on the url for the ruen value;
+    $file = strtok($file, '?');
 
-      // Remove any paramters in the URL for the check.
-      // TODO: Put the params back on the url for the ruen value;
-      $file = strtok($file, '?');
-
-      // http://stackoverflow.com/a/2762083/843131
-      if (preg_match("~^(?:f|ht)tps?://~i", $file)) {
-        // Absolute URL
-        return file_exists($file) ? $file : (!empty($fallback) ? $fallback : false);
+    // http://stackoverflow.com/a/2762083/843131
+    if (preg_match("~^(?:f|ht)tps?://~i", $file)) {
+      // Absolute URL
+      return file_exists($file) ? $file : (!empty($fallback) ? $fallback : false);
+    } else {
+      // Relative URL
+      if ( file_exists($file) || file_exists(Craft::getAlias($alias).'/'.$file)) {
+        return $file;
       } else {
-        // Relative URL
-        if ( file_exists($file) || file_exists(Craft::getAlias('@public').'/'.$file)) {
-          return $file;
-        } else {
-          return !empty($fallback) ? $fallback : false;
-        }
+        return !empty($fallback) ? $fallback : false;
       }
     }
   }
+
+	//////////////////////////////////////////////////////////////////////////////
+  // Get File Contents
+  //////////////////////////////////////////////////////////////////////////////
+
+	public function filecontent(string $file, $alias = '@public') {
+
+		if ( file_exists(Craft::getAlias($alias).'/'.$file) ) {
+
+			return file_get_contents(Craft::getAlias($alias).'/'.$file);
+
+		}
+
+	}
 
 	//////////////////////////////////////////////////////////////////////////////
   // Render Templates
