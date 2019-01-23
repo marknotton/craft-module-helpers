@@ -18,9 +18,7 @@ const dom = {
       loaded = val;
       dom.triggered = true;
       if (loaded == 'loaded') {
-        dom.functions.forEach((func) => {
-          func()
-        });
+        dom.functions.forEach((func) => func());
       }
     }
   },
