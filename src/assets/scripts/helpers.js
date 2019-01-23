@@ -27,7 +27,6 @@ const dom = {
   }
 };
 
-
 // =============================================================================
 // Pluginify
 // =============================================================================
@@ -50,6 +49,29 @@ const pluginify = {
 		}
 	}
 }
+
+// =============================================================================
+// Add a 'locked' getter and setter to thebody
+// =============================================================================
+
+dom.ready(() => {
+
+	if ( window.jQuery && typeof body !== 'undefined' ) {
+		body['_locked'] = false;
+		Object.defineProperty(body, 'locked', {
+			set: function(value) {
+				if ( typeof value == 'boolean' ) {
+					this._locked = value;
+					if ( value ) { body.addClass('locked').bind('mousewheel touchmove', (e) => { e.preventDefault() }) }
+					else { body.removeClass('locked').unbind('mousewheel touchmove') }
+				}
+			},
+			get : function() { return this._locked }
+		});
+	}
+
+})
+
 
 // =============================================================================
 // Debounce
@@ -139,10 +161,10 @@ const scrollbar = {
   y : window.pageYOffset || document.documentElement.scrollTop,
   x : window.pageXOffset || document.documentElement.scrollLeft,
   get width() {
-    return window.innerWidth - document.documentElement.clientWidth;
+    return window.innerWidth - document.documentElement.clientWidth || 0;
   },
   get position() {
-    return Math.round(((window.scrollY / (document.height - document.body.clientHeight)) * 100) * 100) / 100;
+    return Math.round(((window.scrollY / (document.height - document.body.clientHeight)) * 100) * 100) / 100 || 0;
   },
   get direction() {
 

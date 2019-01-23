@@ -42,6 +42,7 @@ class FetchController extends Controller {
 
         $settings = Helpers::$app->request->getSettings();
         $response['success'] = true;
+        $settings['request'] = $requests['response']['request'];
         $response['message'] = 'Template '.$template.' found';
 
         // If a section key was passed. Assume an entry has attempted to be rendered
@@ -205,6 +206,7 @@ class FetchController extends Controller {
 						'name' => $_section->name,
 						'handle' => $_section->handle,
 						'type' => $_section->type,
+						'template' => $_section->template,
 					];
 				}
 			}
