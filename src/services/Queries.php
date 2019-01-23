@@ -212,7 +212,7 @@ class Queries extends Component {
   }
 
   /**
-   * Get all the entrues and categories routes
+   * Get all the entries and categories routes
    * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array

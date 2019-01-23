@@ -12,10 +12,11 @@ use Craft;
 use craft\web\View;
 use craft\web\Controller;
 use craft\elements\Entry;
+use craft\elements\Category;
 
 class FetchController extends Controller {
 
-  protected $allowAnonymous = ['template', 'data', 'robots'];
+  protected $allowAnonymous = ['template', 'data', 'robots', 'endpoints'];
 
 	// ===========================================================================
 	// Template Fetcher
@@ -79,6 +80,129 @@ class FetchController extends Controller {
   }
 
 	// ===========================================================================
+	// End Points
+	// ===========================================================================
+
+	public function actionEndpoints() {
+
+		$routes = Helpers::$app->query->allRules();
+		$results['entries'] = [];
+
+		// Entries -----------------------------------------------------------------
+
+		$sections = $routes['sections'];
+		$entries = Entry::find()->section(null)->limit(null)->all();
+
+		foreach ($entries as $entry) {
+
+			if ( !empty($entry->uri)) {
+
+				$result = [];
+
+				$result['id']       = $entry->id;
+				$result['title']    = $entry->title;
+				$result['uri']      = $entry->uri;
+				$result['slug']     = $entry->slug;
+				$result['type']     = $entry->type->handle;
+				$result['section']  = $entry->type->id;
+
+				$section = array_filter($sections, function($section) use($entry) {
+					if (isset($section['id']) && $section['id'] === $entry->type->id) {
+						return true;
+					}
+					return false;
+				});
+
+				$result['template'] = reset($section)['template'];
+
+				array_push($results['entries'], $result);
+			}
+
+		}
+
+		// Categories --------------------------------------------------------------
+
+		$groups = $routes['categories'];
+
+		// return $this->asJson($groups);
+		$categories = Category::find()->group(null)->limit(null)->all();
+
+		foreach ($categories as $category) {
+
+			if ( !empty($category->uri)) {
+
+				$result = [];
+
+				$result['id']       = $category->id;
+				$result['title']    = $category->title;
+				$result['uri']      = $category->uri;
+				$result['slug']     = $category->slug;
+				$result['type']     = $category->group->handle;
+				$result['group']  = $category->group->id;
+
+				$group = array_filter($groups, function($group) use($category) {
+					// echo $group['id'].' - '.$category->group->id.'<br>';
+					if (isset($group['id']) && $group['id'] === $category->group->id) {
+						return true;
+					}
+					return false;
+				});
+
+				// var_dump($group); die;
+
+				// $result['template'] = reset($group2)['template'];
+
+				array_push($results['entries'], $result);
+			}
+
+		}
+
+		// Products -----------------------------------------------------------------
+
+		// $sections = $routes['sections'];
+		// $products = Product::find()->section(null)->limit(null)->all();
+		//
+		// foreach ($products as $product) {
+		//
+		// 	if ( !empty($product->uri)) {
+		//
+		// 		$result = [];
+		//
+		// 		$result['id']       = $product->id;
+		// 		$result['title']    = $product->title;
+		// 		$result['uri']      = $product->uri;
+		// 		$result['slug']     = $product->slug;
+		// 		$result['type']     = $product->type->handle;
+		// 		$result['section']  = $product->type->id;
+		//
+		// 		array_push($results['entries'], $result);
+		// 	}
+		//
+		// }
+
+		// Routes ------------------------------------------------------------------
+		// These are the routes defined in your config/routes.php file
+
+		$rules = $routes['rules'];
+
+		foreach ($routes['rules'] as $uri => $element) {
+			$result = [];
+
+			$result['uri']     = $uri;
+			$result['template']     = $element['template'];
+
+			array_push($results['entries'], $result);
+		}
+
+		// Add lengths -------------------------------------------------------------
+
+		$results['length'] = count($results['entries']);
+
+		return $this->asJson($results);
+	}
+
+
+	// ===========================================================================
 	// Translations
 	// ===========================================================================
 
@@ -87,7 +211,6 @@ class FetchController extends Controller {
 		$response['query'] = $requests;
 		$response['success'] = true;
 		return $this->asJson($response);
-
 	}
 
 	// ===========================================================================
