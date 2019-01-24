@@ -13,6 +13,8 @@ use craft\web\View;
 use craft\web\Controller;
 use craft\elements\Entry;
 use craft\elements\Category;
+use craft\helpers\StringHelper;
+use craft\commerce\elements\Product;
 
 class FetchController extends Controller {
 
@@ -46,18 +48,45 @@ class FetchController extends Controller {
         $settings['request'] = $requests['response']['request'];
         $response['message'] = 'Template '.$template.' found';
 
-        // If a section key was passed. Assume an entry has attempted to be rendered
-        if (!empty($section) && is_string($section)) {
-          $settings['section'] = Craft::$app->getSections()->getSectionByHandle($section);
-        }
+				switch ($type ?? false) {
+			    case 'product':
+						// Product query
+						if (!empty($id)) {
+							if ( is_array($id) && count($id) > 1 ) {
+								$settings['entries'] = Product::find()->id($id)->all();
+							} else {
+								$settings['product']    = Product::find()->id($id)->one();
+								$settings['segments'] = explode('/', $settings['product']->uri);
+								$settings['title']    = $settings['product']->title;
+							}
+						}
+			    break;
+			    case 'category':
+						// TODO Add category query
+			    break;
+			    case 'slug':
+						// TODO Add slug query
+			    break;
+					case 'rule':
+						$settings['title'] = $title;
+			    break;
+			    default:
+					// Default / Entry query
+					// If a section key was passed. Assume an entry has attempted to be rendered
+					if (!empty($section) && is_string($section)) {
+						$settings['section'] = Craft::$app->getSections()->getSectionByHandle($section);
+					}
 
-        if (!empty($id)) {
-          if ( is_array($id) && count($id) > 1 ) {
-            $settings['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
-          } else {
-            $settings['entry'] = Entry::find()->id($id)->section($section ?? null)->one();
-          }
-        }
+					if (!empty($id)) {
+						if ( is_array($id) && count($id) > 1 ) {
+							$settings['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
+						} else {
+							$settings['entry']    = Entry::find()->id($id)->section($section ?? null)->one();
+							$settings['segments'] = explode('/', $settings['entry']->uri);
+							$settings['title']    = $settings['entry']->title;
+						}
+					}
+				}
 
         // These variables will be accessible in the rendered template
         $variables = array_merge($settings, (array)$query);
@@ -86,36 +115,42 @@ class FetchController extends Controller {
 	public function actionEndpoints() {
 
 		$routes = Helpers::$app->query->allRules();
-		$results['entries'] = [];
+		$results = [];
 
 		// Entries -----------------------------------------------------------------
 
 		$sections = $routes['sections'];
 		$entries = Entry::find()->section(null)->limit(null)->all();
 
-		foreach ($entries as $entry) {
+		if ( !empty($entries) ) {
 
-			if ( !empty($entry->uri)) {
+			$results['entries'] = [];
 
-				$result = [];
+			foreach ($entries as $entry) {
 
-				$result['id']       = $entry->id;
-				$result['title']    = $entry->title;
-				$result['uri']      = $entry->uri;
-				$result['slug']     = $entry->slug;
-				$result['type']     = $entry->type->handle;
-				$result['section']  = $entry->type->id;
+				if ( !empty($entry->uri)) {
 
-				$section = array_filter($sections, function($section) use($entry) {
-					if (isset($section['id']) && $section['id'] === $entry->type->id) {
-						return true;
-					}
-					return false;
-				});
+					$result = ['entrytype' => 'entry'];
 
-				$result['template'] = reset($section)['template'];
+					$result['id']       = intval($entry->id);
+					$result['title']    = $entry->title;
+					$result['uri']      = $entry->uri == '__home__' ? '' : $entry->uri;
+					$result['slug']     = $entry->slug;
+					$result['type']     = $entry->type->handle;
+					$result['section']  = intval($entry->type->id);
 
-				array_push($results['entries'], $result);
+					$section = array_filter($sections, function($section) use($entry) {
+						if (isset($section['id']) && $section['id'] == $entry->type->id) {
+							return true;
+						}
+						return false;
+					});
+
+					$result['template'] = reset($section)['template'];
+
+					array_push($results['entries'], $result);
+				}
+
 			}
 
 		}
@@ -124,79 +159,108 @@ class FetchController extends Controller {
 
 		$groups = $routes['categories'];
 
-		// return $this->asJson($groups);
 		$categories = Category::find()->group(null)->limit(null)->all();
 
-		foreach ($categories as $category) {
+		if ( !empty($categories) ) {
 
-			if ( !empty($category->uri)) {
+			$results['categories'] = [];
 
-				$result = [];
+			foreach ($categories as $category) {
 
-				$result['id']       = $category->id;
-				$result['title']    = $category->title;
-				$result['uri']      = $category->uri;
-				$result['slug']     = $category->slug;
-				$result['type']     = $category->group->handle;
-				$result['group']  = $category->group->id;
+				if ( !empty($category->uri)) {
 
-				$group = array_filter($groups, function($group) use($category) {
-					// echo $group['id'].' - '.$category->group->id.'<br>';
-					if (isset($group['id']) && $group['id'] === $category->group->id) {
-						return true;
-					}
-					return false;
-				});
+					$result = ['entrytype' => 'category'];
 
-				// var_dump($group); die;
+					$result['id']     = intval($category->id);
+					$result['title']  = $category->title;
+					$result['uri']    = $category->uri;
+					$result['slug']   = $category->slug;
+					$result['type']   = $category->group->handle;
+					$result['group']  = intval($category->group->id);
 
-				// $result['template'] = reset($group2)['template'];
+					$group = array_filter($groups, function($group) use($category) {
+						if (isset($group['id']) && $group['id'] == $category->group->id) {
+							return true;
+						}
+						return false;
+					});
 
-				array_push($results['entries'], $result);
+
+					$result['template'] = reset($group)['template'];
+
+					array_push($results['categories'], $result);
+				}
+
 			}
 
 		}
 
 		// Products -----------------------------------------------------------------
 
-		// $sections = $routes['sections'];
-		// $products = Product::find()->section(null)->limit(null)->all();
-		//
-		// foreach ($products as $product) {
-		//
-		// 	if ( !empty($product->uri)) {
-		//
-		// 		$result = [];
-		//
-		// 		$result['id']       = $product->id;
-		// 		$result['title']    = $product->title;
-		// 		$result['uri']      = $product->uri;
-		// 		$result['slug']     = $product->slug;
-		// 		$result['type']     = $product->type->handle;
-		// 		$result['section']  = $product->type->id;
-		//
-		// 		array_push($results['entries'], $result);
-		// 	}
-		//
+		$types = $routes['products'];
+
+		// if ( class_exists('Product') ) {
+
+			$products = Product::find()->limit(null)->all();
+
+			if ( !empty($products) ) {
+
+				$results['products'] = [];
+
+				foreach ($products as $product) {
+
+					if ( !empty($product->uri)) {
+
+						$result = ['entrytype' => 'product'];
+
+						$result['id']       = intval($product->id);
+						$result['title']    = $product->title;
+						$result['uri']      = $product->uri;
+						$result['slug']     = $product->slug;
+						$result['type']     = $product->type->handle;
+						$result['section']  = intval($product->type->id);
+
+						$type = array_filter($types, function($type) use($product) {
+							if (isset($type['id']) && $type['id'] === $product->type->id) {
+								return true;
+							}
+							return false;
+						});
+
+						$result['template'] = reset($type)['template'];
+
+						array_push($results['products'], $result);
+					}
+
+				}
+			}
+
 		// }
 
-		// Routes ------------------------------------------------------------------
+		// Anonymous --------------------------------------------------------------
 		// These are the routes defined in your config/routes.php file
 
 		$rules = $routes['rules'];
 
-		foreach ($routes['rules'] as $uri => $element) {
-			$result = [];
+		if ( !empty($rules) ) {
 
-			$result['uri']     = $uri;
-			$result['template']     = $element['template'];
+			$results['anonymous'] = [];
 
-			array_push($results['entries'], $result);
+			foreach ($routes['rules'] as $uri => $element) {
+
+				$result = ['entrytype' => 'rule'];
+
+				$segments = explode('/',$uri);
+
+				$result['uri']      = $uri;
+				$result['template'] = $element['template'];
+				$result['slug']     = count($segments) > 1 ? end($segments) : $segments[0];;
+				$result['title']    = StringHelper::titleize(str_replace('-', ' ', $result['slug']));
+
+				array_push($results['anonymous'], $result);
+			}
+
 		}
-
-		// Add lengths -------------------------------------------------------------
-
-		$results['length'] = count($results['entries']);
 
 		return $this->asJson($results);
 	}

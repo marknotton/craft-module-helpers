@@ -285,6 +285,34 @@ class Queries extends Component {
 
   }
 
+	/**
+	 * Get all the product type routes rules
+	 * @param  int    $siteId  Site ID. Defaults to 1
+	 * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
+	 * @return array
+	 */
+	public function productRouteRules() {
+
+		extract($this->routeOptions(func_get_args()));
+
+		try {
+			$sql = "SELECT productTypeId AS id, uriFormat, template, siteId, name, handle FROM ".$this->prefix."commerce_producttypes_sites ss ";
+			$sql .= "JOIN ".$this->prefix."commerce_producttypes pi ON ss.productTypeId = pi.id ";
+			$sql .= $siteId !== false && is_numeric($siteId) ? "WHERE siteId = ".$siteId." " : '';
+			$sql .= "ORDER by id" ;
+
+			$command = Craft::$app->db->createCommand($sql);
+			$results = $command->queryAll();
+			return $results;
+
+		}
+		catch(\yii\db\Exception $exception) {
+			return [];
+		}
+
+
+	}
+
   /**
    * Get all the route rules
    * @param  int    $siteId  Site ID. Defaults to 1
@@ -336,9 +364,10 @@ class Queries extends Component {
     extract($this->routeOptions(func_get_args()));
 
     // Get all of the sections
-    $sections = $this->sectionRouteRules($siteId);
+    $sections   = $this->sectionRouteRules($siteId);
     $categories = $this->categoryRouteRules($siteId);
-    $rules = $this->routeRules($siteId);
+    $rules      = $this->routeRules($siteId);
+    $products   = $this->productRouteRules($siteId);
 
     if (!empty($sections)) {
       $results['sections'] = $sections;
@@ -351,6 +380,10 @@ class Queries extends Component {
     if (!empty($rules)) {
       $results['rules'] = $rules;
     }
+
+		if (!empty($products)) {
+			$results['products'] = $products;
+		}
 
     return $results;
 
