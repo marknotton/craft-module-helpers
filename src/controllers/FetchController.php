@@ -130,14 +130,12 @@ class FetchController extends Controller {
 
 				if ( !empty($entry->uri)) {
 
-					$result = ['entrytype' => 'entry'];
+					$result = ['type' => 'entry'];
 
 					$result['id']       = intval($entry->id);
 					$result['title']    = $entry->title;
 					$result['uri']      = $entry->uri == '__home__' ? '' : $entry->uri;
 					$result['slug']     = $entry->slug;
-					$result['type']     = $entry->type->handle;
-					$result['section']  = intval($entry->type->id);
 
 					$section = array_filter($sections, function($section) use($entry) {
 						if (isset($section['id']) && $section['id'] == $entry->type->id) {
@@ -169,14 +167,12 @@ class FetchController extends Controller {
 
 				if ( !empty($category->uri)) {
 
-					$result = ['entrytype' => 'category'];
+					$result = ['type' => 'category'];
 
 					$result['id']     = intval($category->id);
 					$result['title']  = $category->title;
 					$result['uri']    = $category->uri;
 					$result['slug']   = $category->slug;
-					$result['type']   = $category->group->handle;
-					$result['group']  = intval($category->group->id);
 
 					$group = array_filter($groups, function($group) use($category) {
 						if (isset($group['id']) && $group['id'] == $category->group->id) {
@@ -211,14 +207,12 @@ class FetchController extends Controller {
 
 					if ( !empty($product->uri)) {
 
-						$result = ['entrytype' => 'product'];
+						$result = ['type' => 'product'];
 
 						$result['id']       = intval($product->id);
 						$result['title']    = $product->title;
 						$result['uri']      = $product->uri;
 						$result['slug']     = $product->slug;
-						$result['type']     = $product->type->handle;
-						$result['section']  = intval($product->type->id);
 
 						$type = array_filter($types, function($type) use($product) {
 							if (isset($type['id']) && $type['id'] === $product->type->id) {
@@ -248,7 +242,7 @@ class FetchController extends Controller {
 
 			foreach ($routes['rules'] as $uri => $element) {
 
-				$result = ['entrytype' => 'rule'];
+				$result = ['type' => 'rule'];
 
 				$segments = explode('/',$uri);
 
