@@ -2,24 +2,31 @@
 
 Sitemap: {{ seomatic.helper.sitemapIndexForSiteId() }}
 
-User-agent: *
-
 {% switch getenv('ENVIRONMENT') %}
 
 {% case "production" %}
 
+User-agent: *
 Allow: /
 Disallow: /browser
 
 {% case "staging" %}
 
 User-agent: seranking_audit_bot
+Allow: /
+
 User-agent: SEO-PowerSuite-bot
 Allow: /
+
+User-agent: NetpeakSpiderBot
+Allow: /
+
+User-agent: *
 Disallow: /
 
 {% case "dev" %}
 
+User-agent: *
 Disallow: /
 
 {% endswitch %}
