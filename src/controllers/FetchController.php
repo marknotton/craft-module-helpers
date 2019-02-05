@@ -287,7 +287,6 @@ class FetchController extends Controller {
 	// ===========================================================================
 
 	public function actionData() {
-
 		$requests    = $this->requests();
 		$query       = $requests['query'];
 		$response    = $requests['response'];
@@ -321,7 +320,6 @@ class FetchController extends Controller {
 
 			extract((array)$query);
 		}
-
 
 		// Extract keys/values from $criteria if it isn't empty --------------------
 
@@ -387,7 +385,7 @@ class FetchController extends Controller {
 						'name' => $_section->name,
 						'handle' => $_section->handle,
 						'type' => $_section->type,
-						'template' => $_section->template,
+						'template' => $_section->template ?? false,
 					];
 				}
 			}

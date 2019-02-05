@@ -67,6 +67,9 @@ class Filters extends \Twig_Extension {
   }
 
 	public function formatTimeString($ts) {
+    if(is_string($ts)) {
+      $ts = new \DateTime($ts);
+    }
 		$ts = $ts->format('c');
 		    if(!ctype_digit($ts))
 		        $ts = strtotime($ts);
