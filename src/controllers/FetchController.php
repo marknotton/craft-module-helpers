@@ -193,9 +193,9 @@ class FetchController extends Controller {
 
 		// Products -----------------------------------------------------------------
 
-		$types = $routes['products'];
+		$types = $routes['products'] ?? false;
 
-		// if ( class_exists('Product') ) {
+		if ( $types ) {
 
 			$products = Product::find()->limit(null)->all();
 
@@ -229,7 +229,7 @@ class FetchController extends Controller {
 				}
 			}
 
-		// }
+		}
 
 		// Anonymous --------------------------------------------------------------
 		// These are the routes defined in your config/routes.php file
