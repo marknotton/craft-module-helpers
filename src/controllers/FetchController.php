@@ -26,38 +26,35 @@ class FetchController extends Controller {
 
   public function actionTemplate() {
 
-		$requests = $this->requests();
-		$query    = $requests['query'];
-		$response = $requests['response'];
-
-		// Check to see if $query was defined ---------------------------------------
-
-		if ( !empty($query) ) {
-			$response['query'] = $query;
-			extract((array)$query);
-		}
+		extract($this->requests());
 
 		// Fetch Template ==========================================================
 
-    if(!empty($template)){
+    if(!empty($settings)){
+
+      // Throw error if not template path setting exists
+      if(empty($settings['template'])) {
+        $response['message'] = 'A template path was not defined in the settings you passed into request.';
+        $response['error'] = true;
+        return $this->asJson($response);
+      }
 
       try {
 
-        $settings = Helpers::$app->request->getSettings();
-        $response['success'] = true;
-        $settings['request'] = $requests['response']['request'];
-        $response['message'] = 'Template '.$template.' found';
+        $response['message'] = 'Template '.$settings['template'].' was found';
+        $variables = Helpers::$app->request->getSettings();
+        extract($settings);
 
 				switch ($type ?? false) {
 			    case 'product':
 						// Product query
 						if (!empty($id)) {
 							if ( is_array($id) && count($id) > 1 ) {
-								$settings['entries'] = Product::find()->id($id)->all();
+								$variables['entries'] = Product::find()->id($id)->all();
 							} else {
-								$settings['product']    = Product::find()->id($id)->one();
-								$settings['segments'] = explode('/', $settings['product']->uri);
-								$settings['title']    = $settings['product']->title;
+								$variables['product']  = Product::find()->id($id)->one();
+								$variables['segments'] = explode('/', $variables['product']->uri);
+								$variables['title']    = $variables['product']->title;
 							}
 						}
 			    break;
@@ -68,37 +65,30 @@ class FetchController extends Controller {
 						// TODO Add slug query
 			    break;
 					case 'rule':
-						$settings['title'] = $title;
+						$variables['title'] = $title;
 			    break;
 			    default:
 					// Default / Entry query
 					// If a section key was passed. Assume an entry has attempted to be rendered
 					if (!empty($section) && is_string($section)) {
-						$settings['section'] = Craft::$app->getSections()->getSectionByHandle($section);
+						$variables['section'] = Craft::$app->getSections()->getSectionByHandle($section);
 					}
-
+        
 					if (!empty($id)) {
 						if ( is_array($id) && count($id) > 1 ) {
-							$settings['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
+							$variables['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
 						} else {
-							$settings['entry']    = Entry::find()->id($id)->section($section ?? null)->one();
-							$settings['segments'] = explode('/', $settings['entry']->uri);
-							$settings['title']    = $settings['entry']->title;
+							$variables['entry']    = Entry::find()->id($id)->section($section ?? null)->one();
+							$variables['segments'] = explode('/', $variables['entry']->uri);
+							$variables['title']    = $variables['entry']->title;
 						}
 					}
 				}
 
-        // These variables will be accessible in the rendered template
-        $variables = array_merge($settings, (array)$query);
-
-        $response['html'] = Craft::$app->getView()->renderTemplate($template, $variables);
+        $response['html'] = Craft::$app->getView()->renderTemplate($settings['template'], $variables);
 
       } catch(\Exception $e) {
 
-				// Error handler -------------------------------------------------------
-
-				unset($response['success']);
-        $response['error'] = true;
         $response['message'] = $e->getMessage();
 
       }
@@ -504,22 +494,20 @@ class FetchController extends Controller {
 	private function requests() {
 
 		$response = [];
-		$query = false;
+		$settings = false;
+    $request  = $_SERVER['HTTP_X_REQUESTED_WITH'];
 
-    if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-      $request = $_SERVER['HTTP_X_REQUESTED_WITH'];
+    if (isset($request)) {
+
       switch (strtolower($request)) {
 
 				// AJAX data -----------------------------------------------------------
 
 				case 'xmlhttprequest':
           $response['request'] = "ajax";
-					$response['message'] = 'A template path was not defined in your AJAX "data" parameters.';
-
 					try {
-						$query = (object)Craft::$app->getRequest()->getBodyParams();
+						$settings = (object)Craft::$app->getRequest()->getBodyParams();
 					} catch(\Exception $e) {
-						$response['error'] = true;
 						$response['message'] = $e->getMessage();
 					}
         break;
@@ -528,35 +516,31 @@ class FetchController extends Controller {
 
 				case 'fetch':
           $response['request'] = "fetch";
-					$response['message'] = 'A template path was not defined in your Fetch "body" parameters.';
-
 					try {
-						$query = json_decode(file_get_contents('php://input'));
+						$settings = json_decode(file_get_contents('php://input'), true);
 					} catch(\Exception $e) {
-						$response['error'] = true;
 						$response['message'] = $e->getMessage();
 					}
         break;
+
       }
     } else {
 
-			// URL data --------------------------------------------------------------
+			// Data directly queried via URL -----------------------------------------
 
 			$response['request'] = "direct";
-			$response['message'] = 'A template path was not defined in the URL parameters.';
 
 			try {
-				$query = Craft::$app->getRequest()->resolve()[1];
-				unset($query['p']);
+				$settings = Craft::$app->getRequest()->resolve()[1];
+				unset($settings['p']);
 			} catch(\Exception $e) {
-				$response['error'] = true;
 				$response['message'] = $e->getMessage();
 			}
 		}
 
-		// Return the data and responces
+		// Return the settings and responces
 
-		return ["query" => $query, "response" => $response];
+		return ["settings" => $settings, "response" => $response];
 
 	}
 
