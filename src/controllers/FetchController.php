@@ -34,20 +34,25 @@ class FetchController extends Controller {
 
       // Throw error if not template path setting exists
       if(empty($settings['template'])) {
-        $response['message'] = 'A template path was not defined in the settings you passed into request.';
+        $response['message'] = 'A template path was not defined in the settings you passed into the request.';
         $response['error'] = true;
         return $this->asJson($response);
       }
 
       try {
 
-        $response['message'] = 'Template '.$settings['template'].' was found';
-        $variables = Helpers::$app->request->getSettings();
         extract($settings);
+        $response['message'] = 'Template '.$template.' was found';
+        $variables = Helpers::$app->request->getSettings();
 
 				switch ($type ?? false) {
-			    case 'product':
-						// Product query
+
+          // -------------------------------------------------------------------
+          // Product query
+          // -------------------------------------------------------------------
+
+          case 'product':
+
 						if (!empty($id)) {
 							if ( is_array($id) && count($id) > 1 ) {
 								$variables['entries'] = Product::find()->id($id)->all();
@@ -57,23 +62,35 @@ class FetchController extends Controller {
 								$variables['title']    = $variables['product']->title;
 							}
 						}
+
 			    break;
+
+          // -------------------------------------------------------------------
+          // Category query
+          // -------------------------------------------------------------------
+
 			    case 'category':
 						// TODO Add category query
 			    break;
+
+          // -------------------------------------------------------------------
+          // Slug query
+          // -------------------------------------------------------------------
+
 			    case 'slug':
 						// TODO Add slug query
 			    break;
-					case 'rule':
-						$variables['title'] = $title;
-			    break;
+
+          // -------------------------------------------------------------------
+          // Entry query
+          // -------------------------------------------------------------------
+
 			    default:
-					// Default / Entry query
-					// If a section key was passed. Assume an entry has attempted to be rendered
+
 					if (!empty($section) && is_string($section)) {
 						$variables['section'] = Craft::$app->getSections()->getSectionByHandle($section);
 					}
-        
+
 					if (!empty($id)) {
 						if ( is_array($id) && count($id) > 1 ) {
 							$variables['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
@@ -493,54 +510,24 @@ class FetchController extends Controller {
 
 	private function requests() {
 
-		$response = [];
-		$settings = false;
-    $request  = $_SERVER['HTTP_X_REQUESTED_WITH'];
+    $request  = Helpers::$app->request->isDynamicRequest();
+		$response = [ 'request' => ($request ? $request : 'url') ];
 
-    if (isset($request)) {
-
-      switch (strtolower($request)) {
-
-				// AJAX data -----------------------------------------------------------
-
-				case 'xmlhttprequest':
-          $response['request'] = "ajax";
-					try {
-						$settings = (object)Craft::$app->getRequest()->getBodyParams();
-					} catch(\Exception $e) {
-						$response['message'] = $e->getMessage();
-					}
-        break;
-
-				// Fetch data ----------------------------------------------------------
-
-				case 'fetch':
-          $response['request'] = "fetch";
-					try {
-						$settings = json_decode(file_get_contents('php://input'), true);
-					} catch(\Exception $e) {
-						$response['message'] = $e->getMessage();
-					}
-        break;
-
+    if ( $request == 'ajax' || $request == 'fetch') {
+      try {
+        $settings = json_decode(file_get_contents('php://input'), true);
+      } catch(\Exception $e) {
+        $response['message'] = $e->getMessage();
       }
     } else {
+      try {
+        $settings = Craft::$app->getRequest()->resolve()[1];
+      } catch(\Exception $e) {
+        $response['message'] = $e->getMessage();
+      }
+    }
 
-			// Data directly queried via URL -----------------------------------------
-
-			$response['request'] = "direct";
-
-			try {
-				$settings = Craft::$app->getRequest()->resolve()[1];
-				unset($settings['p']);
-			} catch(\Exception $e) {
-				$response['message'] = $e->getMessage();
-			}
-		}
-
-		// Return the settings and responces
-
-		return ["settings" => $settings, "response" => $response];
+		return ["settings" => $settings ?? false, "response" => $response];
 
 	}
 

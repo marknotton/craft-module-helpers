@@ -653,6 +653,33 @@ class Requests extends Component {
     return Helpers::$general->devMode === true;
   }
 
+  /**
+   * Checks if the server request is from 'ajax' or 'fetch'
+   *
+   * @return bool
+   */
+  public function isDynamicRequest() {
+
+    $request = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? false;
+
+    if (!empty($request)) {
+
+      $request = strtolower($request);
+
+      switch ($request) {
+        case 'xmlhttprequest':
+          $request = "ajax";
+        break;
+				case 'fetch':
+          $request = "fetch";
+        break;
+      }
+
+    }
+
+    return $request;
+  }
+
 
   /**
    * If the httpstatus code is 503, assume this is the holding page
