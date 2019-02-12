@@ -60,18 +60,36 @@ class Queries extends Component {
 
     if ( Helpers::$database ) {
 
-      $sql = "SELECT handle, enabled FROM ".getenv('DB_TABLE_PREFIX')."plugins" ;
 
-      $command = Craft::$app->db->createCommand($sql);
-      $results = $command->queryAll();
+			if (version_compare(Craft::$app->getInfo()->version, '3.1', '>=')) {
 
-      if ($results) {
-        foreach ($results as $value) {
-					if ( $value['enabled'] ) {
-          	$newResults[$value['handle'].'Enabled'] = true;
+				$results = Craft::$app->plugins->getAllPluginInfo();
+
+				if ($results) {
+	        foreach ($results as $handle => $value) {
+						if ( $value['isEnabled'] ) {
+	          	$newResults[$handle.'Enabled'] = true;
+						}
+	        }
+	      }
+
+			} else {
+
+	      $sql = "SELECT handle, enabled FROM ".getenv('DB_TABLE_PREFIX')."plugins" ;
+
+	      $command = Craft::$app->db->createCommand($sql);
+	      $results = $command->queryAll();
+
+				if ($results) {
+					foreach ($results as $value) {
+						if ( $value['enabled'] ) {
+							$newResults[$value['handle'].'Enabled'] = true;
+						}
 					}
-        }
-      }
+				}
+
+			}
+
     }
 
     return $newResults;
@@ -194,7 +212,7 @@ class Queries extends Component {
   }
 
   /**
-   * Get all the entrues and categories routes
+   * Get all the entries and categories routes
    * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
@@ -267,41 +285,73 @@ class Queries extends Component {
 
   }
 
+	/**
+	 * Get all the product type routes rules
+	 * @param  int    $siteId  Site ID. Defaults to 1
+	 * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
+	 * @return array
+	 */
+	public function productRouteRules() {
+
+		extract($this->routeOptions(func_get_args()));
+
+		try {
+			$sql = "SELECT productTypeId AS id, uriFormat, template, siteId, name, handle FROM ".$this->prefix."commerce_producttypes_sites ss ";
+			$sql .= "JOIN ".$this->prefix."commerce_producttypes pi ON ss.productTypeId = pi.id ";
+			$sql .= $siteId !== false && is_numeric($siteId) ? "WHERE siteId = ".$siteId." " : '';
+			$sql .= "ORDER by id" ;
+
+			$command = Craft::$app->db->createCommand($sql);
+			$results = $command->queryAll();
+			return $results;
+
+		}
+		catch(\yii\db\Exception $exception) {
+			return [];
+		}
+
+
+	}
+
   /**
    * Get all the route rules
    * @param  int    $siteId  Site ID. Defaults to 1
    * @param  int    $limit  Limit the amount of results. Default to 100. Use Null for unlimited
    * @return array
    */
-  public function routeRules() {
+	 public function routeRules() {
 
-    extract($this->routeOptions(func_get_args()));
+     extract($this->routeOptions(func_get_args()));
 
+ 		// If Craft is version 3.1 or higher, then get the Routes options natively
+ 		if (version_compare(Craft::$app->getInfo()->version, '3.1', '>=')) {
+ 			$results = Craft::$app->getRoutes()->getDbRoutes();
+ 		} else {
+ 			// Otherwise do my refined and direct mySQL query.
+ 			$sql = "SELECT uriPattern, template FROM ".$this->prefix."routes ";
+ 			$sql .= $siteId !== false && is_numeric($siteId) ? "WHERE (ISNULL(siteId) OR siteId = ".$siteId.") " : " ";
+ 			$sql .= "ORDER by id";
 
-    $sql = "SELECT uriPattern, template FROM ".$this->prefix."routes ";
-    $sql .= $siteId !== false && is_numeric($siteId) ? "WHERE (ISNULL(siteId) OR siteId = ".$siteId.") " : " ";
-    $sql .= "ORDER by id";
+ 			$command = Craft::$app->db->createCommand($sql);
+ 			$results = $command->queryAll();
 
-    $command = Craft::$app->db->createCommand($sql);
-    $results = $command->queryAll();
+ 			$cmsRoutes = [];
 
-    $fileRoutes = Craft::$app->getRoutes()->getConfigFileRoutes();
-    $cmsRoutes = [];
+ 			if (!empty($results)) {
+ 				foreach($results as &$value) {
+ 					$cmsRoutes[$value['uriPattern']] = ['template' => $value['template']];
+ 				}
+ 			};
+ 		}
 
-    if (!empty($results)) {
-      foreach($results as &$value) {
-        $cmsRoutes[$value['uriPattern']] = ['template' => $value['template']];
-      }
-    };
+     $results = array_merge(
+       Craft::$app->getRoutes()->getConfigFileRoutes(),
+       $results
+     );
 
-    $results = array_merge(
-      $fileRoutes,
-      $cmsRoutes
-    );
+     return $results;
 
-    return $results;
-
-  }
+   }
 
   /**
    * Get all the section, category, and route rules
@@ -314,9 +364,10 @@ class Queries extends Component {
     extract($this->routeOptions(func_get_args()));
 
     // Get all of the sections
-    $sections = $this->sectionRouteRules($siteId);
+    $sections   = $this->sectionRouteRules($siteId);
     $categories = $this->categoryRouteRules($siteId);
-    $rules = $this->routeRules($siteId);
+    $rules      = $this->routeRules($siteId);
+    $products   = $this->productRouteRules($siteId);
 
     if (!empty($sections)) {
       $results['sections'] = $sections;
@@ -329,6 +380,10 @@ class Queries extends Component {
     if (!empty($rules)) {
       $results['rules'] = $rules;
     }
+
+		if (!empty($products)) {
+			$results['products'] = $products;
+		}
 
     return $results;
 

@@ -9,12 +9,16 @@ namespace modules\helpers\controllers;
 use modules\helpers\Helpers;
 
 use Craft;
+use craft\web\View;
 use craft\web\Controller;
 use craft\elements\Entry;
+use craft\elements\Category;
+use craft\helpers\StringHelper;
+use craft\commerce\elements\Product;
 
 class FetchController extends Controller {
 
-  protected $allowAnonymous = ['template', 'data'];
+  protected $allowAnonymous = ['template', 'data', 'robots', 'endpoints'];
 
 	// ===========================================================================
 	// Template Fetcher
@@ -41,20 +45,48 @@ class FetchController extends Controller {
 
         $settings = Helpers::$app->request->getSettings();
         $response['success'] = true;
+        $settings['request'] = $requests['response']['request'];
         $response['message'] = 'Template '.$template.' found';
 
-        // If a section key was passed. Assume an entry has attempted to be rendered
-        if (!empty($section) && is_string($section)) {
-          $settings['section'] = Craft::$app->getSections()->getSectionByHandle($section);
-        }
+				switch ($type ?? false) {
+			    case 'product':
+						// Product query
+						if (!empty($id)) {
+							if ( is_array($id) && count($id) > 1 ) {
+								$settings['entries'] = Product::find()->id($id)->all();
+							} else {
+								$settings['product']    = Product::find()->id($id)->one();
+								$settings['segments'] = explode('/', $settings['product']->uri);
+								$settings['title']    = $settings['product']->title;
+							}
+						}
+			    break;
+			    case 'category':
+						// TODO Add category query
+			    break;
+			    case 'slug':
+						// TODO Add slug query
+			    break;
+					case 'rule':
+						$settings['title'] = $title;
+			    break;
+			    default:
+					// Default / Entry query
+					// If a section key was passed. Assume an entry has attempted to be rendered
+					if (!empty($section) && is_string($section)) {
+						$settings['section'] = Craft::$app->getSections()->getSectionByHandle($section);
+					}
 
-        if (!empty($id)) {
-          if ( is_array($id) && count($id) > 1 ) {
-            $settings['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
-          } else {
-            $settings['entry'] = Entry::find()->id($id)->section($section ?? null)->one();
-          }
-        }
+					if (!empty($id)) {
+						if ( is_array($id) && count($id) > 1 ) {
+							$settings['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
+						} else {
+							$settings['entry']    = Entry::find()->id($id)->section($section ?? null)->one();
+							$settings['segments'] = explode('/', $settings['entry']->uri);
+							$settings['title']    = $settings['entry']->title;
+						}
+					}
+				}
 
         // These variables will be accessible in the rendered template
         $variables = array_merge($settings, (array)$query);
@@ -76,6 +108,162 @@ class FetchController extends Controller {
 
   }
 
+	// ===========================================================================
+	// End Points
+	// ===========================================================================
+
+	public function actionEndpoints() {
+
+		$routes = Helpers::$app->query->allRules();
+		$results = [];
+
+		// Entries -----------------------------------------------------------------
+
+		$sections = $routes['sections'];
+		$entries = Entry::find()->section(null)->limit(null)->all();
+
+		if ( !empty($entries) ) {
+
+			$results['entries'] = [];
+
+			foreach ($entries as $entry) {
+
+				if ( !empty($entry->uri)) {
+
+					$result = ['type' => 'entry'];
+
+					$result['id']       = intval($entry->id);
+					$result['title']    = $entry->title;
+					$result['uri']      = $entry->uri == '__home__' ? '' : $entry->uri;
+					$result['slug']     = $entry->slug;
+
+					$section = array_filter($sections, function($section) use($entry) {
+						if (isset($section['id']) && $section['id'] == $entry->type->id) {
+							return true;
+						}
+						return false;
+					});
+
+					$result['template'] = reset($section)['template'];
+
+					array_push($results['entries'], $result);
+				}
+
+			}
+
+		}
+
+		// Categories --------------------------------------------------------------
+
+		$groups = $routes['categories'];
+
+		$categories = Category::find()->group(null)->limit(null)->all();
+
+		if ( !empty($categories) ) {
+
+			$results['categories'] = [];
+
+			foreach ($categories as $category) {
+
+				if ( !empty($category->uri)) {
+
+					$result = ['type' => 'category'];
+
+					$result['id']     = intval($category->id);
+					$result['title']  = $category->title;
+					$result['uri']    = $category->uri;
+					$result['slug']   = $category->slug;
+
+					$group = array_filter($groups, function($group) use($category) {
+						if (isset($group['id']) && $group['id'] == $category->group->id) {
+							return true;
+						}
+						return false;
+					});
+
+
+					$result['template'] = reset($group)['template'];
+
+					array_push($results['categories'], $result);
+				}
+
+			}
+
+		}
+
+		// Products -----------------------------------------------------------------
+
+		$types = $routes['products'] ?? false;
+
+		if ( $types ) {
+
+			$products = Product::find()->limit(null)->all();
+
+			if ( !empty($products) ) {
+
+				$results['products'] = [];
+
+				foreach ($products as $product) {
+
+					if ( !empty($product->uri)) {
+
+						$result = ['type' => 'product'];
+
+						$result['id']       = intval($product->id);
+						$result['title']    = $product->title;
+						$result['uri']      = $product->uri;
+						$result['slug']     = $product->slug;
+
+						$type = array_filter($types, function($type) use($product) {
+							if (isset($type['id']) && $type['id'] === $product->type->id) {
+								return true;
+							}
+							return false;
+						});
+
+						$result['template'] = reset($type)['template'];
+
+						array_push($results['products'], $result);
+					}
+
+				}
+			}
+
+		}
+
+		// Anonymous --------------------------------------------------------------
+		// These are the routes defined in your config/routes.php file
+
+		$rules = $routes['rules'];
+
+		if ( !empty($rules) ) {
+
+			$results['anonymous'] = [];
+
+			foreach ($routes['rules'] as $uri => $element) {
+
+				$result = ['type' => 'rule'];
+
+				$segments = explode('/',$uri);
+
+				$result['uri']      = $uri;
+				$result['template'] = $element['template'];
+				$result['slug']     = count($segments) > 1 ? end($segments) : $segments[0];;
+				$result['title']    = StringHelper::titleize(str_replace('-', ' ', $result['slug']));
+
+				array_push($results['anonymous'], $result);
+			}
+
+		}
+
+		return $this->asJson($results);
+	}
+
+
+	// ===========================================================================
+	// Translations
+	// ===========================================================================
+
 	public function actionTranslations() {
 		$requests = $this->requests();
 		$response['query'] = $requests;
@@ -84,11 +272,21 @@ class FetchController extends Controller {
 	}
 
 	// ===========================================================================
+	// Robots
+	// ===========================================================================
+
+	public function actionRobots() {
+		$text = Helpers::$app->request->renderTemplate('_robots');
+    $headers = Craft::$app->response->headers;
+    $headers->add('Content-Type', 'text/plain; charset=utf-8');
+    return $this->asRaw($text);
+	}
+
+	// ===========================================================================
 	// Data Fetcher
 	// ===========================================================================
 
 	public function actionData() {
-
 		$requests    = $this->requests();
 		$query       = $requests['query'];
 		$response    = $requests['response'];
@@ -122,7 +320,6 @@ class FetchController extends Controller {
 
 			extract((array)$query);
 		}
-
 
 		// Extract keys/values from $criteria if it isn't empty --------------------
 
@@ -188,6 +385,7 @@ class FetchController extends Controller {
 						'name' => $_section->name,
 						'handle' => $_section->handle,
 						'type' => $_section->type,
+						'template' => $_section->template ?? false,
 					];
 				}
 			}

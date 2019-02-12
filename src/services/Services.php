@@ -8,19 +8,12 @@ namespace modules\helpers\services;
 use modules\helpers\Helpers;
 
 use Craft;
-use craft\web\View;
 use craft\base\Component;
 use craft\helpers\StringHelper;
 use craft\helpers\Template;
 use craft\elements\Entry;
 
 class Services extends Component {
-
-  public $session;
-
-  public function init() {
-    $this->session = Craft::$app->getSession();
-  }
 
   //////////////////////////////////////////////////////////////////////////////
   // Clean up class names
@@ -89,8 +82,8 @@ class Services extends Component {
    *
    * @param string
    */
-  public function setSession($key = null, $value = true) {
-    $this->session->set($key, $value);
+  public function setSession($key, $value = true) {
+    Craft::$app->getSession()->set($key, $value);
   }
 
   /**
@@ -99,8 +92,8 @@ class Services extends Component {
    * @param string
    * @return string
    */
-  public function getSession($key = null) {
-    return $this->session->get($key);
+  public function getSession($key) {
+    return Craft::$app->getSession()->get($key);
   }
 
   /**

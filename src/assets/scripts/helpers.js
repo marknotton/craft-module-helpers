@@ -1,7 +1,7 @@
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 // Dom Listener
 // @see https://stackoverflow.com/a/37403125/843131
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 // This function can be defined multiple times. Each iterations
 // will be triggered after all DOM elements and scripts have loaded.
 // Usage:
@@ -18,9 +18,7 @@ const dom = {
       loaded = val;
       dom.triggered = true;
       if (loaded == 'loaded') {
-        dom.functions.forEach((func) => {
-          func()
-        });
+        dom.functions.forEach((func) => func());
       }
     }
   },
@@ -29,9 +27,55 @@ const dom = {
   }
 };
 
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
+// Pluginify
+// =============================================================================
+
+const pluginify = {
+
+	instances : {},
+
+	add : (name, classname) => {
+
+		let $this = pluginify
+
+		if ( typeof $this.instances[name] !== 'undefined' ) {
+			return $this.instances[name]
+		}
+
+		$.fn[name] = function(...options) {
+			$this.instances[name] = new classname(this, ...options)
+			return $this.instances[name]
+		}
+	}
+}
+
+// =============================================================================
+// Add a 'locked' getter and setter to thebody
+// =============================================================================
+
+dom.ready(() => {
+
+	if ( window.jQuery && typeof body !== 'undefined' ) {
+		body['_locked'] = false;
+		Object.defineProperty(body, 'locked', {
+			set: function(value) {
+				if ( typeof value == 'boolean' ) {
+					this._locked = value;
+					if ( value ) { body.addClass('locked').bind('mousewheel touchmove', (e) => { e.preventDefault() }) }
+					else { body.removeClass('locked').unbind('mousewheel touchmove') }
+				}
+			},
+			get : function() { return this._locked }
+		});
+	}
+
+})
+
+
+// =============================================================================
 // Debounce
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 
 const debounce = (fn, time = 10) => {
   let timeout;
@@ -44,9 +88,9 @@ const debounce = (fn, time = 10) => {
   }
 };
 
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 // Dimensions
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 // These add 'width' and 'height' getters to the window and document objects respectively
 
 if ( typeof window.width == 'undefined' ) {
@@ -77,9 +121,9 @@ if ( typeof document.height == 'undefined' ) {
   });
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 // Disable Console Logging on Production Environments for non-admins.
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 
 if ( document.body.classList.contains('production-environment') && !document.body.classList.contains('admin') ) {
 
@@ -109,18 +153,18 @@ if ( document.body.classList.contains('production-environment') && !document.bod
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 // Scrollbar
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 
 const scrollbar = {
   y : window.pageYOffset || document.documentElement.scrollTop,
   x : window.pageXOffset || document.documentElement.scrollLeft,
   get width() {
-    return window.innerWidth - document.documentElement.clientWidth;
+    return window.innerWidth - document.documentElement.clientWidth || 0;
   },
   get position() {
-    return Math.round(((window.scrollY / (document.height - document.body.clientHeight)) * 100) * 100) / 100;
+    return Math.round(((window.scrollY / (document.height - document.body.clientHeight)) * 100) * 100) / 100 || 0;
   },
   get direction() {
 

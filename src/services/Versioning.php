@@ -66,9 +66,10 @@ class Versioning extends Component {
       $filesToAdd = '';
 
       // If the script name is an absolute url, just include it as it is
-      if (filter_var($file, FILTER_VALIDATE_URL)) {
+      if (filter_var($file, FILTER_VALIDATE_URL) || substr( $file, 0, 2 ) === "//") {
 
-        $filesToAdd = Helpers::$app->service->relativeUrl($file) . $devmode;
+				$file = preg_replace('#^https?://#', '//', $file);
+        $filesToAdd = $file . $devmode;
 
       } else if ( isset(Helpers::$settings['filenames']['js']) ) {
 

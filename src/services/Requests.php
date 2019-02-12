@@ -18,6 +18,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use yii\base\ErrorException;
 use yii\base\Exception;
 use yii\base\InvalidArgumentException;
+use craft\web\View;
 use craft\web\twig\variables\Rebrand;
 use craft\helpers\Template;
 
@@ -175,28 +176,84 @@ class Requests extends Component {
    * @example Helpers::$app->request->fileexists(...);
    * @return bool
    */
-  public function fileexists(string $file, string $fallback = null) {
+  public function fileexists(string $file, string $fallback = null, string $alias = '@public') {
 
-    if (gettype($file) == 'string') {
+    // Remove any paramters in the URL for the check.
+    // TODO: Put the params back on the url for the ruen value;
+    $file = strtok($file, '?');
 
-      // Remove any paramters in the URL for the check.
-      // TODO: Put the params back on the url for the ruen value;
-      $file = strtok($file, '?');
-
-      // http://stackoverflow.com/a/2762083/843131
-      if (preg_match("~^(?:f|ht)tps?://~i", $file)) {
-        // Absolute URL
-        return file_exists($file) ? $file : (!empty($fallback) ? $fallback : false);
+    // http://stackoverflow.com/a/2762083/843131
+    if (preg_match("~^(?:f|ht)tps?://~i", $file)) {
+      // Absolute URL
+      return file_exists($file) ? $file : (!empty($fallback) ? $fallback : false);
+    } else {
+      // Relative URL
+      if ( file_exists($file) || file_exists(Craft::getAlias($alias).'/'.$file)) {
+        return $file;
       } else {
-        // Relative URL
-        if ( file_exists($file) || file_exists(Craft::getAlias('@public').'/'.$file)) {
-          return $file;
-        } else {
-          return !empty($fallback) ? $fallback : false;
-        }
+        return !empty($fallback) ? $fallback : false;
       }
     }
   }
+
+	//////////////////////////////////////////////////////////////////////////////
+  // Get File Contents
+  //////////////////////////////////////////////////////////////////////////////
+
+	public function filecontent(string $file, $alias = '@public') {
+
+		if ( file_exists(Craft::getAlias($alias).'/'.$file) ) {
+
+			return file_get_contents(Craft::getAlias($alias).'/'.$file);
+
+		}
+
+	}
+
+	//////////////////////////////////////////////////////////////////////////////
+  // Render Templates
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Render templates files from the modules or frontend. If a template exists
+   * in both the frontend and the module; frontend templates will get priority.
+   * @param  string $template Template filename. If it's a twig file, you can ommit the file extension.
+   * @param  array $args Parameters you want to pass into the template.
+   * @param  string
+   * @example Helpers::$app->request->renderTemplate(...);
+   * @return object
+   */
+	public function renderTemplate(string $template, $args = []) {
+
+		// Check if the string has a file extension. If not, add '.twig'
+		if (!substr(strrchr($template,'.'),1)) {
+			$template = $template.'.twig';
+		}
+
+		if ( $this->fileexists(Craft::getAlias('@root').'/templates/'.$template)) {
+
+			// Check if the template file exists relative to the frontend templates
+
+			return \Craft::$app->view->renderTemplate($template, $args);
+
+		} elseif ($this->fileexists(Craft::getAlias('@helpers').'/templates/'.$template) ) {
+
+			// Check if the template file exists relative to the helpers module templates
+
+			$oldMode = \Craft::$app->view->getTemplateMode();
+			\Craft::$app->view->setTemplateMode(View::TEMPLATE_MODE_CP);
+			$render = \Craft::$app->view->renderTemplate('helpers/'.$template, $args);
+			\Craft::$app->view->setTemplateMode($oldMode);
+
+			return $render;
+
+		} else {
+
+			throw new \yii\web\NotFoundHttpException();
+
+		}
+
+	}
 
   //////////////////////////////////////////////////////////////////////////////
   // File Directory
@@ -313,12 +370,12 @@ class Requests extends Component {
   // Load Scripts as per the config.json & settings.php options
   //////////////////////////////////////////////////////////////////////////////
 
-  public function loadScripts($filenamesOnly = false, $dir = null) {
+  public function loadScripts($filenamesOnly = false, $dir = null, $scripts = null) {
 
     $dir        = $dir ?? Helpers::$settings['js'] ?? '';
     $versioning = Helpers::$settings['versioning'] ?? false;
     $minified   = Helpers::$settings['minify'] ?? false;
-    $scripts    = Helpers::$settings['scripts'] ?? [];
+    $scripts    = $scripts ?? Helpers::$settings['scripts'] ?? [];
     $devmode    = ($this->devmode() ? '?v='.rand() : '');
 
     $scriptsToLoad = [];
@@ -333,24 +390,25 @@ class Requests extends Component {
     } else {
       foreach ($scripts as &$script) {
         if (filter_var($script, FILTER_VALIDATE_URL)) {
+					$script = preg_replace('#^https?://#', '//', $script);
           if ($this->devmode()) {
             $scriptsToLoad[] = Helpers::$app->service->params($script, ['v'=>rand()]);
           } else {
             $scriptsToLoad[] = $script;
           }
-        } else {
-          $scriptsToLoad[] = $dir . $script . $devmode;
+        } elseif (substr( $script, 0, 2 ) === "//") {
+					$scriptsToLoad[] = ($minified ? str_replace('.js', '.min.js', $script) : $script) . $devmode;
+				} else {
+          $scriptsToLoad[] = $dir . ($minified ? str_replace('.js', '.min.js', $script) : $script) . $devmode;
         }
       }
-      if ( $minified ) {
-        $scriptsToLoad = array_map(function($val) { return str_replace('.js', '.min.js', $val); }, $scriptsToLoad);
-      }
+
     }
 
     if ( !$filenamesOnly ) {
       $scriptTags = [];
       foreach ($scriptsToLoad as &$file) {
-        $scriptTags[] = '<script src="'.$dir.$file.$devmode.'"></script>';
+        $scriptTags[] = '<script src="'.$file.'"></script>';
       }
 
       return Template::raw(implode("\n",$scriptTags));
@@ -361,8 +419,8 @@ class Requests extends Component {
 
   }
 
-  public function getScripts($dir = null) {
-    return $this->loadScripts(true, $dir);
+  public function getScripts($dir = null, $scripts = null) {
+    return $this->loadScripts(true, $dir, $scripts);
   }
 
   //////////////////////////////////////////////////////////////////////////////

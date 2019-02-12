@@ -54,9 +54,12 @@ class Fixers {
   // Make all external links open a new tab.
   links () {
     $('a').each(function() {
-      const a = new RegExp('/' + window.location.host + '/');
-      if (!a.test(this.href)) {
-        if (!this.href.startsWith('callto') && !this.href.startsWith('tel') && !this.href.startsWith('mailto') && !this.href.startsWith('skype')) {
+      let a = new RegExp('/' + window.location.host + '/')
+			let extensions = ['doc', 'docx', 'odt', 'pdf', 'xls', 'xlsx', 'ods', 'ptt', 'pptx', 'txt']
+			let isDocument = extensions.some((ext) => this.href.endsWith(ext));
+
+      if (!a.test(this.href) || isDocument) {
+        if (!this.href.startsWith('callto') && !this.href.startsWith('tel') && !this.href.startsWith('mailto') && !this.href.startsWith('skype') && !this.href.endsWith('.pdf') || isDocument) {
           $(this).attr({'rel': 'noopener', 'target': '_blank'});
         }
       }

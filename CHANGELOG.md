@@ -1,5 +1,9 @@
 # Helpers Changelog
 
+## 1.0.7
+
+- Stable release as per Aspire.
+
 ## 1.0.6
 
 - Various major changes, fixes and additions.

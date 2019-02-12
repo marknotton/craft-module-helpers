@@ -291,5 +291,5 @@ class Iterator {
 // Pluginify - Convert plugin class into a jQuery plugin
 ////////////////////////////////////////////////////////////////////////////////
 if ( window.jQuery && typeof pluginify !== 'undefined') {
-  pluginify('iterate', Iterator, false);
+  pluginify.add('iterate', Iterator, false);
 }
