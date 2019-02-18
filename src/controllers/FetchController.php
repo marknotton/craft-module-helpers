@@ -30,14 +30,14 @@ class FetchController extends Controller {
 
 		// Fetch Template ==========================================================
 
-    if(!empty($settings)){
+    // Throw error if no template path setting exists
+    if(empty($settings) || empty($settings['template'])) {
+      $response['message'] = 'A template path was not defined in the settings you passed into the request.';
+      $response['error'] = true;
+      return $this->asJson($response);
+    }
 
-      // Throw error if not template path setting exists
-      if(empty($settings['template'])) {
-        $response['message'] = 'A template path was not defined in the settings you passed into the request.';
-        $response['error'] = true;
-        return $this->asJson($response);
-      }
+    if(!empty($settings)){
 
       try {
 
@@ -143,6 +143,7 @@ class FetchController extends Controller {
 					$result['title']    = $entry->title;
 					$result['uri']      = $entry->uri == '__home__' ? '' : $entry->uri;
 					$result['slug']     = $entry->slug;
+					$result['classes']  = Helpers::$app->request->classes($entry);
 
 					$section = array_filter($sections, function($section) use($entry) {
 						if (isset($section['id']) && $section['id'] == $entry->type->id) {
@@ -180,6 +181,7 @@ class FetchController extends Controller {
 					$result['title']  = $category->title;
 					$result['uri']    = $category->uri;
 					$result['slug']   = $category->slug;
+          $result['classes']  = Helpers::$app->request->classes($category);
 
 					$group = array_filter($groups, function($group) use($category) {
 						if (isset($group['id']) && $group['id'] == $category->group->id) {
@@ -220,6 +222,7 @@ class FetchController extends Controller {
 						$result['title']    = $product->title;
 						$result['uri']      = $product->uri;
 						$result['slug']     = $product->slug;
+            $result['classes']  = Helpers::$app->request->classes($product);
 
 						$type = array_filter($types, function($type) use($product) {
 							if (isset($type['id']) && $type['id'] === $product->type->id) {
