@@ -128,7 +128,6 @@ class FetchController extends Controller {
 
 		$sections = $routes['sections'];
 		$entries = Entry::find()->section(null)->limit(null)->all();
-
 		if ( !empty($entries) ) {
 
 			$results['entries'] = [];
@@ -136,6 +135,8 @@ class FetchController extends Controller {
 			foreach ($entries as $entry) {
 
 				if ( !empty($entry->uri)) {
+
+
 
 					$result = ['type' => 'entry'];
 
@@ -146,11 +147,12 @@ class FetchController extends Controller {
 					$result['classes']  = Helpers::$app->request->classes($entry);
 
 					$section = array_filter($sections, function($section) use($entry) {
-						if (isset($section['id']) && $section['id'] == $entry->type->id) {
+						if (isset($section['id']) && $section['id'] == $entry->type->sectionId) {
 							return true;
 						}
 						return false;
 					});
+
 
 					$result['template'] = reset($section)['template'];
 
