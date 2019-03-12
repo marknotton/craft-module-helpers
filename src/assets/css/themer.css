@@ -16,6 +16,11 @@
     background-position: bottom center;
   }
 
+  /* Super Tables */
+  .superTableMatrix.matrixblock {
+    padding:14px;
+  }
+
   /* Redactor */
   .input .redactor-styles h1, .redactor-dropdown-item-h1 span { font-size:38px !important; line-height:30px !important; color:var(--primary) !important; }
   .input .redactor-styles h2, .redactor-dropdown-item-h2 span { font-size:32px !important; line-height:35px !important; color:var(--primary) !important; }
