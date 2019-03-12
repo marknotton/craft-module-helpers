@@ -108,7 +108,16 @@ class FetchController extends Controller {
 
       } catch(\Exception $e) {
 
-        throw new Exception($e->getMessage());
+        if (Helpers::$app->request->devmode()) {
+
+          throw new Exception($e->getMessage());
+
+        } else {
+
+          $response['error'] = true;
+          $response['message'] = $e->getMessage();
+
+        }
 
       }
     }
@@ -501,10 +510,17 @@ class FetchController extends Controller {
 
 			// Error handler -------------------------------------------------------
 
-			// unset($response['success']);
-			// $response['error'] = true;
-			// $response['message'] = $e->getMessage();
-      throw new Exception($e->getMessage());
+      if (Helpers::$app->request->devmode()) {
+
+        throw new Exception($e->getMessage());
+
+      } else {
+
+  			unset($response['success']);
+  			$response['error'] = true;
+  			$response['message'] = $e->getMessage();
+
+      }
 
 		}
 
