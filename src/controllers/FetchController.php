@@ -15,6 +15,8 @@ use craft\elements\Entry;
 use craft\elements\Category;
 use craft\helpers\StringHelper;
 use craft\commerce\elements\Product;
+use yii\base\Exception;
+
 
 class FetchController extends Controller {
 
@@ -106,7 +108,7 @@ class FetchController extends Controller {
 
       } catch(\Exception $e) {
 
-        $response['message'] = $e->getMessage();
+        throw new Exception($e->getMessage());
 
       }
     }
@@ -499,9 +501,10 @@ class FetchController extends Controller {
 
 			// Error handler -------------------------------------------------------
 
-			unset($response['success']);
-			$response['error'] = true;
-			$response['message'] = $e->getMessage();
+			// unset($response['success']);
+			// $response['error'] = true;
+			// $response['message'] = $e->getMessage();
+      throw new Exception($e->getMessage());
 
 		}
 
