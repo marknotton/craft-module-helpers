@@ -72,7 +72,21 @@ class FetchController extends Controller {
           // -------------------------------------------------------------------
 
 			    case 'category':
-						// TODO Add category query
+
+            // if (!empty($group) && is_string($group)) {
+            //   $variables['group'] = Craft::$app->getGroups()->getGroupByHandle($group);
+            // }
+
+            if (!empty($id)) {
+              if ( is_array($id) && count($id) > 1 ) {
+                $variables['entries'] = Category::find()->id($id)->all();
+              } else {
+                $variables['category'] = Category::find()->id($id)->one();
+                $variables['segments'] = explode('/', $variables['category']->uri);
+                $variables['title']    = $variables['category']->title;
+              }
+            }
+
 			    break;
 
           // -------------------------------------------------------------------
