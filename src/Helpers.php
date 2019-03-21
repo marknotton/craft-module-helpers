@@ -189,6 +189,12 @@ class Helpers extends Module {
           }
         );
 
+
+        $view->registerScript("
+        var environment = '".getenv('ENVIRONMENT')."';
+        var allowAdminChanges = ".(Craft::$app->getConfig()->getGeneral()->allowAdminChanges ? 'true' : 'false').";",
+        View::POS_HEAD);
+
         Helpers::$app->service->themer();
         Helpers::$app->service->installation();
 

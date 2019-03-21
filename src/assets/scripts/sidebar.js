@@ -74,4 +74,6 @@ var sidebarEnhancer = {
 };
 
 // Call the initialize function
-sidebarEnhancer.init();
+if ( typeof allowAdminChanges == 'undefined' || allowAdminChanges === true ) {
+  sidebarEnhancer.init()
+}

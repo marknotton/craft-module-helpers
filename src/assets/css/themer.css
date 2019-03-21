@@ -16,16 +16,16 @@
     background-position: bottom center;
   }
 
-  /* Super Tables */
-  .superTableMatrix.matrixblock {
-    padding:14px;
-  }
-
   /* Redactor */
   .input .redactor-styles h1, .redactor-dropdown-item-h1 span { font-size:38px !important; line-height:30px !important; color:var(--primary) !important; }
   .input .redactor-styles h2, .redactor-dropdown-item-h2 span { font-size:32px !important; line-height:35px !important; color:var(--primary) !important; }
   .input .redactor-styles h3, .redactor-dropdown-item-h3 span { font-size:22px !important; line-height:26px !important; color:var(--secondary, var(--primary)) !important;  }
   .input .redactor-styles h4, .redactor-dropdown-item-h4 span { font-size:18px !important; line-height:22px !important; color:var(--secondary, var(--primary)) !important; }
+
+  /* Super Tables */
+  .superTableMatrix.matrixblock {
+    padding:14px;
+  }
 
   /* Dark blue */
   #global-sidebar { background: var(--primary, #333E4D); }
