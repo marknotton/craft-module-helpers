@@ -130,12 +130,13 @@ class Snip extends \Twig_Extension {
 
   /**
    * Truncate string by sentance count
-   * @param  string  $string   String to truncate
-   * @param  integer $limit    The max sentance count
-   * @param  string  $suffix   Suffix to add at the end of the line
-   * @return string            Truncted string
+   * @param  string  $string     String to truncate
+   * @param  integer $limit      The max sentance count
+   * @param  string  $suffix     Suffix to add at the end of the line
+   * @param  string  $threshold  Set a minimum amount of characters that defines the minimum lenght of a sentence.
+   * @return string              Truncted string
    */
-	public function sentences($string, $limit=2, $suffix='')	{
+	public function sentences($string, $limit=2, $suffix='', $threshold = 10)	{
 
 		// In some cases you may pass in a redactor field to be truncated.
 		// Redactor data is passed as an object and needs to be queried for the string.
@@ -149,7 +150,7 @@ class Snip extends \Twig_Extension {
 		foreach (explode('.', $string) as $sentence) {
       if (!empty($sentence)) {
   			$count ++;
-  			if ( $count <= $limit) {
+  			if ( $count <= $limit || strlen($sentences) < $threshold) {
   				$sentences .= $sentence.'.';
   			}
       }
