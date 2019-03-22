@@ -78,6 +78,14 @@ class Helpers extends Module {
       }
     });
 
+    Event::on(
+      Fields::class,
+      Fields::EVENT_REGISTER_FIELD_TYPES,
+      function (RegisterComponentTypesEvent $event) {
+          $event->types[] = Video::class;
+      }
+    );
+
     self::$console = Craft::$app->getRequest()->getIsConsoleRequest();
 
     static::setInstance($this);
@@ -115,33 +123,33 @@ class Helpers extends Module {
       );
 
       // Check if there are any fields settings in config/settings.php
-      if ( $fields = self::$settings['cms']['fields'] ?? true ) {
+      // if ( $fields = self::$settings['cms']['fields'] ?? true ) {
         // If it doesn't exist, or does exist and is not an empty array...
-        if ( $fields === true || !empty($fields) ) {
+        // if ( $fields === true || !empty($fields) ) {
           // If $fields is any array, uppercase the first of each string in the array.
-          $fields = is_array($fields) ? array_map('ucfirst', $fields) : $fields;
+          // $fields = is_array($fields) ? array_map('ucfirst', $fields) : $fields;
           // Then find all fields files
-          Event::on(
-            Fields::class,
-            Fields::EVENT_REGISTER_FIELD_TYPES,
-            function (RegisterComponentTypesEvent $event) {
-              foreach (glob(__DIR__.'/fields/*.php') as $file) {
-                // If fields don't exist, install all fields.
-                // Otherwise, only install defined fields.
-                // FIXME: Losing variable scrope:
-                // if ( $fields === true || in_array(basename($file, '.php'), $fields) ) {
-                  // Get the Class path and check it exists
-                  $class = '\\modules\\helpers\\fields\\'.basename($file, '.php');
-                  if (class_exists($class)) {
-                    // Finally, register the Twig extension.
-                    $event->types[] = $class;
-                  }
-                // }
-              }
-            }
-          );
-        }
-      }
+          // Event::on(
+            // Fields::class,
+            // Fields::EVENT_REGISTER_FIELD_TYPES,
+            // function (RegisterComponentTypesEvent $event) {
+              // foreach (glob(__DIR__.'/fields/*.php') as $file) {
+              //   // If fields don't exist, install all fields.
+              //   // Otherwise, only install defined fields.
+              //   // FIXME: Losing variable scope:
+              //   // if ( $fields === true || in_array(basename($file, '.php'), $fields) ) {
+              //     // Get the Class path and check it exists
+              //     $class = '\\modules\\helpers\\fields\\'.basename($file, '.php');
+              //     if (class_exists($class)) {
+              //       // Finally, register the Twig extension.
+              //       $event->types[] = $class;
+              //     }
+              //   // }
+              // }
+            // }
+          // );
+        // }
+      // }
 
       // Add versioning class if versioning is enabled in the config.json
       if ( self::$config['versioning'] ?? false ) {
