@@ -22,8 +22,28 @@ class Filters extends \Twig_Extension {
       new \Twig_SimpleFilter('cleanup', [$this, 'cleanup'], ['is_safe' => ['html']] ),
       new \Twig_SimpleFilter('render_text', [$this, 'renderText'], ['is_safe' => ['html']] ),
       new \Twig_SimpleFilter('formatTimeString', [$this, 'formatTimeString'], ['is_safe' => ['html']] ),
-      new \Twig_SimpleFilter('dump', [$this, 'dump'])
+      new \Twig_SimpleFilter('dump', [$this, 'dump']),
+      new \Twig_SimpleFilter('pregMatch', [$this, 'pregMatch']),
+      new \Twig_SimpleFilter('pregMatchAll', [$this, 'pregMatchAll'])
     ];
+  }
+
+  /** @see: https://www.php.net/manual/en/function.preg-match.php */
+  public function pregMatch(string $subject, string $pattern, $flags = PREG_OFFSET_CAPTURE) {
+    if ( gettype($flags) == 'string' ) {
+      $flags = constant($flags);
+    }
+   preg_match($pattern, $subject, $matches, $flags);
+   return $matches;
+  }
+
+  /** @see: https://www.php.net/manual/en/function.preg-match-all.php */
+  public function pregMatchAll(string $subject, string $pattern, $flags = PREG_OFFSET_CAPTURE) {
+    if ( gettype($flags) == 'string' ) {
+      $flags = constant($flags);
+    }
+   preg_match_all($pattern, $subject, $matches, $flags);
+   return $matches;
   }
 
   /** @see: http://php.net/manual/en/function.array-column.php */
