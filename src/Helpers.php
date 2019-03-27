@@ -158,6 +158,35 @@ class Helpers extends Module {
         ]);
       }
 
+      // Pass all settings to Javascript variables and load into the head, frontend and back
+      $data = '';
+      $exclusions = ['root', 'webroot', 'page'];
+
+      foreach (self::$settings as $variable => $value) {
+
+        if (!in_array($variable, $exclusions)) {
+
+          $val = $value;
+
+          switch (gettype($value)) {
+            case 'string':
+              $val = '"'.$value.'"';
+            break;
+            case 'boolean':
+              $val = $value ? 'true' : 'false';
+            break;
+            case 'array':
+              $val = json_encode($value);
+            break;
+          }
+
+          $data .= "var ".$variable." = ".$val.";\r\n";
+
+        }
+      }
+
+      $view->registerScript($data, View::POS_HEAD);
+
       // Check if there are any extension settings in config/settings.php
       if ( $extensions = self::$settings['cms']['extensions'] ?? true ) {
         // If it doesn't exist, or does exist and is not an empty array...
@@ -199,7 +228,6 @@ class Helpers extends Module {
 
 
         $view->registerScript("
-        var environment = '".getenv('ENVIRONMENT')."';
         var allowAdminChanges = ".(Craft::$app->getConfig()->getGeneral()->allowAdminChanges ? 'true' : 'false').";",
         View::POS_HEAD);
 
@@ -228,6 +256,7 @@ class Helpers extends Module {
       function (RegisterUrlRulesEvent $event) {
         $event->rules['fetch-template'] = 'helpers/fetch/template';
         $event->rules['fetch-data']     = 'helpers/fetch/data';
+        $event->rules['fetch-assets']   = 'helpers/fetch/assets';
         $event->rules['end-points']     = 'helpers/fetch/endpoints';
         $event->rules['robots.txt']     = 'helpers/fetch/robots';
       }

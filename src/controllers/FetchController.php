@@ -20,7 +20,7 @@ use yii\base\Exception;
 
 class FetchController extends Controller {
 
-  protected $allowAnonymous = ['template', 'data', 'robots', 'endpoints'];
+  protected $allowAnonymous = ['template', 'data', 'robots', 'endpoints', 'assets'];
 
 	// ===========================================================================
 	// Template Fetcher
@@ -296,6 +296,41 @@ class FetchController extends Controller {
 		return $this->asJson($results);
 	}
 
+  // ===========================================================================
+	// Assets Fetcher
+	// ===========================================================================
+
+	public function actionAssets() {
+		$requests = $this->requests();
+    $assets = [];
+
+    extract($this->requests()['settings']);
+
+    if ( !empty($id) ) {
+
+      $ids = [];
+
+      switch (gettype($id)) {
+        case 'string':
+          $ids = explode(",", $id);
+        break;
+        case 'array':
+          $ids = $id;
+        break;
+        default:
+          $ids = [$id];
+      }
+
+      foreach ($ids as &$id) {
+        if ( $asset = Craft::$app->getAssets()->getAssetById($id) ?? false ) {
+          $assets[] = $asset->getUrl($transform ?? null);
+        }
+      }
+
+    }
+
+		return $this->asJson($assets);
+	}
 
 	// ===========================================================================
 	// Translations
