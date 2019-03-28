@@ -117,8 +117,15 @@ class FetchController extends Controller {
 						}
 					}
 				}
-
+        if(!is_array($variables)) {
+          $variables = [];
+        }
+        if(!is_array($settings)) {
+          $settings = [];
+        }
+        $variables = array_merge($variables, $settings);
         $response['html'] = Craft::$app->getView()->renderTemplate($settings['template'], $variables);
+        $response['variables'] = $variables;
 
       } catch(\Exception $e) {
 
