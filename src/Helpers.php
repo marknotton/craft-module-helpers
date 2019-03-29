@@ -255,7 +255,7 @@ class Helpers extends Module {
       // UrlManager::EVENT_REGISTER_CP_URL_RULES,
       function (RegisterUrlRulesEvent $event) {
         $event->rules['fetch-template'] = 'helpers/fetch/template';
-        $event->rules['fetch-data']     = 'helpers/fetch/data';
+        // $event->rules['fetch-data']     = 'helpers/fetch/data';
         $event->rules['fetch-assets']   = 'helpers/fetch/assets';
         $event->rules['end-points']     = 'helpers/fetch/endpoints';
         $event->rules['robots.txt']     = 'helpers/fetch/robots';

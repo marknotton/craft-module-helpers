@@ -28,23 +28,31 @@ class FetchController extends Controller {
 
   public function actionTemplate() {
 
-		extract($this->requests());
+    $requests = $this->requests();
+    $data     = $requests['data'];
+    $response = $requests['response'];
 
 		// Fetch Template ==========================================================
 
     // Throw error if no template path setting exists
-    if(empty($settings) || empty($settings['template'])) {
+    if(empty($data) || empty($data['template'])) {
       $response['message'] = 'A template path was not defined in the settings you passed into the request.';
       $response['error'] = true;
       return $this->asJson($response);
     }
 
-    if(!empty($settings)){
+    if(!empty($data)){
 
       try {
 
-        extract($settings);
+        $template = $data['template'] ?? false;
+        $section  = $data['section'] ?? false;
+        $id       = $data['id'] ?? false;
+        $type     = $data['type'] ?? false;
+
         $response['message'] = 'Template '.$template.' was found';
+
+        // These variables will be passed into the template
         $variables = Helpers::$app->request->getSettings();
 
 				switch ($type ?? false) {
@@ -109,7 +117,7 @@ class FetchController extends Controller {
 
 					if (!empty($id)) {
 						if ( is_array($id) && count($id) > 1 ) {
-							$variables['entries'] = Entry::find()->id($id)->section($section ?? null)->all();
+							$variables['entries']  = Entry::find()->id($id)->section($section ?? null)->all();
 						} else {
 							$variables['entry']    = Entry::find()->id($id)->section($section ?? null)->one();
 							$variables['segments'] = explode('/', $variables['entry']->uri);
@@ -117,14 +125,14 @@ class FetchController extends Controller {
 						}
 					}
 				}
-        if(!is_array($variables)) {
-          $variables = [];
-        }
-        if(!is_array($settings)) {
-          $settings = [];
-        }
-        $variables = array_merge($variables, $settings);
-        $response['html'] = Craft::$app->getView()->renderTemplate($settings['template'], $variables);
+
+
+        $variables = is_array($variables) ? $variables : [];
+        $data = is_array($data) ? $data : [];
+
+        $variables = array_merge($variables, $data);
+
+        $response['html'] = Craft::$app->getView()->renderTemplate($template, $variables);
         $response['variables'] = $variables;
 
       } catch(\Exception $e) {
@@ -167,8 +175,6 @@ class FetchController extends Controller {
 			foreach ($entries as $entry) {
 
 				if ( !empty($entry->uri)) {
-
-
 
 					$result = ['type' => 'entry'];
 
@@ -308,10 +314,12 @@ class FetchController extends Controller {
 	// ===========================================================================
 
 	public function actionAssets() {
+
 		$requests = $this->requests();
     $assets = [];
 
-    extract($this->requests()['settings']);
+    $id = $requests['data']['id'] ?? false;
+    $transform = $requests['data']['transform'] ?? false;
 
     if ( !empty($id) ) {
 
@@ -366,10 +374,11 @@ class FetchController extends Controller {
 	// ===========================================================================
 
 	public function actionData() {
+
 		$requests    = $this->requests();
-		$query       = $requests['query'];
-		$response    = $requests['response'];
-		$allFields   = Helpers::$app->query->fields();
+		$query       = $requests['data'] ?? false;
+		$response    = $requests['response'] ?? false;
+
 		$content     = [];
 		$exclusions  = ['id', 'limit', 'section'];
 		$defaultData = ['title', 'id', 'slug', 'uri', 'type', 'postDate'];
@@ -377,25 +386,28 @@ class FetchController extends Controller {
 		// Extract keys/values from $query if it isn't empty ------------------------
 
 		if ( !empty($query) ) {
+
 			$response['query'] = $query;
 
-			if ( !empty($allFields) ) {
+      // $allFields = Helpers::$app->query->fields();
+      //
+			// if ( !empty($allFields) ) {
+      //
+			// 	$fieldHandles = array_column($allFields, 'handle');
+      //
+			// 	$keys = array_keys((array)$query);
+      //
+			// 	if ( !empty($query->data) ) {
+			// 		$keys = array_merge($keys, $query->data);
+			// 	}
+      //
+			// 	foreach ($keys as &$value) {
+			// 	  if (in_array($value, $fieldHandles)) {
+			// 			array_push($defaultData, $value);
+			// 		}
+			// 	}
 
-				$fieldHandles = array_column($allFields, 'handle');
-
-				$keys = array_keys((array)$query);
-
-				if ( !empty($query->data) ) {
-					$keys = array_merge($keys, $query->data);
-				}
-
-				foreach ($keys as &$value) {
-				  if (in_array($value, $fieldHandles)) {
-						array_push($defaultData, $value);
-					}
-				}
-
-			}
+			// }
 
 			extract((array)$query);
 		}
@@ -445,7 +457,7 @@ class FetchController extends Controller {
 
 		$settings = Helpers::$app->request->getSettings();
 
-		// Use $criteria and $query to query for results ----------------------------
+		// Use $criteria and $query to query for results ---------------------------
 
 		try {
 
@@ -460,10 +472,10 @@ class FetchController extends Controller {
 
 				if ( !empty($_section) ) {
 					$response['section'] = [
-						'id' => $_section->id,
-						'name' => $_section->name,
-						'handle' => $_section->handle,
-						'type' => $_section->type,
+						'id'       => $_section->id,
+						'name'     => $_section->name,
+						'handle'   => $_section->handle,
+						'type'     => $_section->type,
 						'template' => $_section->template ?? false,
 					];
 				}
@@ -551,16 +563,15 @@ class FetchController extends Controller {
 
 			// $response['criteria'] = $defaultData;
 			$response['results'] = [
-				'total' => count($content),
-				'limit' => !empty($limit) ? (int)$limit : count($content),
+				'total'  => count($content),
+				'limit'  => !empty($limit) ? (int)$limit : count($content),
 				'offset' => !empty($offset) ? $offset : 0,
-				'pages' => [ 'total' => !empty($limit) ? ($limit ?? 0)/count($content) : 1, 'current' => (!empty($offset) ? (($limit ?? 0)/$offset) : 1)],
-				'types' => !empty($types) ? $types : null
+				'pages'  => [ 'total' => !empty($limit) ? ($limit ?? 0)/count($content) : 1, 'current' => (!empty($offset) ? (($limit ?? 0)/$offset) : 1)],
+				'types'  => !empty($types) ? $types : null
 			];
 			$response['message'] = count($content).' results were found.';
 			$response['entries'] = $content;
 			$response['success'] = true;
-
 
 		} catch(\Exception $e) {
 
@@ -595,19 +606,19 @@ class FetchController extends Controller {
 
     if ( $request == 'ajax' || $request == 'fetch') {
       try {
-        $settings = json_decode(file_get_contents('php://input'), true);
+        $data = json_decode(file_get_contents('php://input'), true);
       } catch(\Exception $e) {
         $response['message'] = $e->getMessage();
       }
     } else {
       try {
-        $settings = Craft::$app->getRequest()->resolve()[1];
+        $data = Craft::$app->getRequest()->resolve()[1];
       } catch(\Exception $e) {
         $response['message'] = $e->getMessage();
       }
     }
 
-		return ["settings" => $settings ?? false, "response" => $response];
+		return ["data" => $data ?? false, "response" => $response];
 
 	}
 
