@@ -126,7 +126,6 @@ class FetchController extends Controller {
 					}
 				}
 
-
         $variables = is_array($variables) ? $variables : [];
         $data = is_array($data) ? $data : [];
 
@@ -182,6 +181,7 @@ class FetchController extends Controller {
 					$result['title']    = $entry->title;
 					$result['uri']      = $entry->uri == '__home__' ? '' : $entry->uri;
 					$result['slug']     = $entry->slug;
+          $result['cpUrl']    = $entry->cpEditUrl;
 					$result['classes']  = Helpers::$app->request->classes($entry);
 
 					$section = array_filter($sections, function($section) use($entry) {
@@ -221,6 +221,7 @@ class FetchController extends Controller {
 					$result['title']  = $category->title;
 					$result['uri']    = $category->uri;
 					$result['slug']   = $category->slug;
+					$result['cpUrl']  = $category->cpEditUrl;
           $result['classes']  = Helpers::$app->request->classes($category);
 
 					$group = array_filter($groups, function($group) use($category) {
@@ -262,6 +263,7 @@ class FetchController extends Controller {
 						$result['title']    = $product->title;
 						$result['uri']      = $product->uri;
 						$result['slug']     = $product->slug;
+            $result['cpUrl']    = $product->cpEditUrl;
             $result['classes']  = Helpers::$app->request->classes($product);
 
 						$type = array_filter($types, function($type) use($product) {
