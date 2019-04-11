@@ -521,6 +521,10 @@ class Requests extends Component {
         }
       }
 
+      if ( $element->hasDescendants ?? false ) {
+        $classes[] = 'has-descendants';        
+      }
+
       // Get Entry Information
       foreach ($query['element'] as &$value) {
         if (isset($element[$value])) {

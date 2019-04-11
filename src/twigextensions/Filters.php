@@ -24,8 +24,21 @@ class Filters extends \Twig_Extension {
       new \Twig_SimpleFilter('formatTimeString', [$this, 'formatTimeString'], ['is_safe' => ['html']] ),
       new \Twig_SimpleFilter('dump', [$this, 'dump']),
       new \Twig_SimpleFilter('pregMatch', [$this, 'pregMatch']),
-      new \Twig_SimpleFilter('pregMatchAll', [$this, 'pregMatchAll'])
+      new \Twig_SimpleFilter('pregMatchAll', [$this, 'pregMatchAll']),
+      new \Twig_SimpleFilter('hexToRgb', [$this, 'hexToRgb'])
     ];
+  }
+
+  function hexToRgb($hex, $alpha = false) {
+     $hex      = str_replace('#', '', $hex);
+     $length   = strlen($hex);
+     $rgb['r'] = hexdec($length == 6 ? substr($hex, 0, 2) : ($length == 3 ? str_repeat(substr($hex, 0, 1), 2) : 0));
+     $rgb['g'] = hexdec($length == 6 ? substr($hex, 2, 2) : ($length == 3 ? str_repeat(substr($hex, 1, 1), 2) : 0));
+     $rgb['b'] = hexdec($length == 6 ? substr($hex, 4, 2) : ($length == 3 ? str_repeat(substr($hex, 2, 1), 2) : 0));
+     if ( $alpha ) {
+        $rgb['a'] = $alpha;
+     }
+     return $rgb;
   }
 
   /** @see: https://www.php.net/manual/en/function.preg-match.php */
