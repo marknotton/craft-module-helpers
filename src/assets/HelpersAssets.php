@@ -18,7 +18,7 @@ class HelpersAssets extends AssetBundle {
 
     $this->css = [];
 
-    $this->js = ['scripts/notifications.js'];
+    $this->js = ['scripts/notifications.js', 'scripts/helpers.js'];
 
     $user = Craft::$app->getUser()->getIdentity() ?? null;
 

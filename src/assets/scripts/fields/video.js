@@ -42,7 +42,7 @@
         //   {% endfor %}
         // };
 
-        console.log($this.options);
+        // console.log($this.options);
         //
         // {% set formats = settings.formats|keys %}
         //
@@ -59,7 +59,7 @@
         field.bind('propertychange change click keyup input cut blur paste', validate);
 
         function validate() {
-          console.log(field.val());
+          // console.log(field.val());
           // if (field.data('old') != field.val()) {
           //
           //   field.data('old', field.val());
