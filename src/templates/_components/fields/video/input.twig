@@ -2,11 +2,21 @@
 
 {% import "_includes/forms" as forms %}
 
+{% set inputValue = "" %}
+
+{% if value is not empty %}
+	{% if value.link ?? false and value.link is not empty %}
+		{% set inputValue = value.link %}
+	{% elseif value.code ?? false and value.code is not empty %}
+		{% set inputValue = "https://www.youtube.com/watch?v=" ~ value.code %}
+	{% endif %}
+{% endif %}
+
 {{ forms.textField({
 	id: id,
   instructions: 'Enter a website url here',
 	name: name,
-	value: value.url ?? value,
+	value: inputValue,
 	placeholder: 'https://www.youtube.com/watch?v=-onYzz-M1cA',
 }) }}
 
